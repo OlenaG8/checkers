@@ -31,6 +31,7 @@ public class Board extends JPanel {
     public Board(Gui parentGUI, MovementLogic logic) {
         this.parentGUI = parentGUI;
         setBackground(new Color(51, 49, 43));
+        setPreferredSize(new Dimension(850, 850));
         this.logic = logic;
 
         try {
@@ -40,7 +41,7 @@ public class Board extends JPanel {
             whiteQueenImage = ImageIO.read(new File("images/vanillaQueen.png"));
             blackQueenImage = ImageIO.read(new File("images/chocolateQueen.png"));
         } catch (IOException e) {
-            System.out.println("Nie udało się załadować rafik: " + e.getMessage());
+            System.out.println("Nie udało się załadować grafik: " + e.getMessage());
         }
 
         addMouseListener(new MouseAdapter() {

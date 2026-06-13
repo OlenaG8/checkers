@@ -47,8 +47,23 @@ public class Gui extends JFrame {
 
         add(topPanel, BorderLayout.NORTH);
 
-        add(new Board(this, logic), BorderLayout.CENTER);
+        JPanel boardWrapper = new JPanel() {
+            @Override
+            public void doLayout() {
+                if (getComponentCount() > 0) {
+                    Component board = getComponent(0);
+                    int size = Math.min(getWidth(), getHeight());
 
+                    int x = (getWidth() - size) / 2;
+                    int y = (getHeight() - size) / 2;
+
+                    board.setBounds(x, y, size, size);
+                }
+            }
+        };
+        boardWrapper.add(new Board(this, logic));
+        boardWrapper.setBackground(new Color(51, 49, 43));
+        add(boardWrapper, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
 
         startTimer();
