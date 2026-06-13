@@ -26,10 +26,12 @@ public class Board extends JPanel {
     private boolean isJumpingSequence = false;
 
     private final Gui parentGUI;
+    private final MovementLogic logic;
 
-    public Board(Gui parentGUI) {
+    public Board(Gui parentGUI, MovementLogic logic) {
         this.parentGUI = parentGUI;
         setBackground(new Color(51, 49, 43));
+        this.logic = logic;
 
         try {
             boardImage = ImageIO.read(new File("images/chessboard.png"));
@@ -53,9 +55,9 @@ public class Board extends JPanel {
                 if (col < 0 || col > NUM_OF_TILES - 1 || row < 0 || row > NUM_OF_TILES - 1) return;
 
                 if (isJumpingSequence) {
-                    int moveResult = MovementLogic.MoveCheckerOnce(selectedRow, selectedCol, row, col);
+                    int moveResult = logic.moveCheckerOnce(selectedRow, selectedCol, row, col);
                     if (moveResult == 2) {
-                        if (MovementLogic.HasAnyJumps(row, col)) {
+                        if (logic.hasAnyJumps(row, col)) {
                             selectedRow = row;
                             selectedCol = col;
                         } else {
@@ -64,7 +66,7 @@ public class Board extends JPanel {
                     }
                 } else {
                     if (selectedRow == -1) {
-                        if (isCurrentPlayerPiece(MovementLogic.boardState[row][col])) {
+                        if (isCurrentPlayerPiece(logic.boardState[row][col])) {
                             selectedRow = row;
                             selectedCol = col;
                         }
@@ -73,11 +75,11 @@ public class Board extends JPanel {
                             selectedRow = -1;
                             selectedCol = -1;
                         } else {
-                            int moveResult = MovementLogic.MoveCheckerOnce(selectedRow, selectedCol, row, col);
+                            int moveResult = logic.moveCheckerOnce(selectedRow, selectedCol, row, col);
                             if (moveResult == 1) {
                                 endTurnLocal();
                             } else if (moveResult == 2) {
-                                if (MovementLogic.HasAnyJumps(row, col)) {
+                                if (logic.hasAnyJumps(row, col)) {
                                     selectedRow = row;
                                     selectedCol = col;
                                     isJumpingSequence = true;
@@ -85,7 +87,7 @@ public class Board extends JPanel {
                                     endTurnLocal();
                                 }
                             } else {
-                                if (isCurrentPlayerPiece(MovementLogic.boardState[row][col])) {
+                                if (isCurrentPlayerPiece(logic.boardState[row][col])) {
                                     selectedRow = row;
                                     selectedCol = col;
                                 } else {
@@ -111,6 +113,7 @@ public class Board extends JPanel {
     }
 
     private boolean isCurrentPlayerPiece(PieceType pieceType) {
+        if (pieceType == null) return false;
         int currentPlayer = parentGUI.getCurrentPlayer();
         if (currentPlayer == 1) return pieceType.isVanilla();
         if (currentPlayer == 2) return !pieceType.isVanilla();
@@ -163,7 +166,7 @@ public class Board extends JPanel {
 
             for (int r = 0; r < NUM_OF_TILES; r++) {
                 for (int c = 0; c < NUM_OF_TILES; c++) {
-                    int moveType = MovementLogic.CanCheckerMoveOnce(selectedRow, selectedCol, r, c);
+                    int moveType = logic.canCheckerMoveOnce(selectedRow, selectedCol, r, c);
                     if (moveType > 0) {
                         if (isJumpingSequence && moveType != 2) continue;
 
@@ -181,7 +184,7 @@ public class Board extends JPanel {
 
         for (int row = 0; row < NUM_OF_TILES; row++) {
             for (int col = 0; col < NUM_OF_TILES; col++) {
-                PieceType pieceType = MovementLogic.boardState[row][col];
+                PieceType pieceType = logic.boardState[row][col];
 
                 if (pieceType != null) {
                     double tileCenterX = (col * tileWidth) + (tileWidth / 2.0);

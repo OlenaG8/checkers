@@ -4,34 +4,29 @@ public class MovementLogic {
     public static final int NUM_OF_TILES = 8;
     public static final int ROWS_PER_COLOR = 3;
 
-    public static final PieceType[][] boardState = new PieceType[NUM_OF_TILES][NUM_OF_TILES];
-    private static CheckersStartPosition whitePosition = MovementLogic.CheckersStartPosition.WHITE_ON_BOTTOM;
+    public final PieceType[][] boardState = new PieceType[NUM_OF_TILES][NUM_OF_TILES];
+    private final CheckersStartPosition whitePosition;
 
-    public static void Initialize(CheckersStartPosition whitePosition) {
-        for (int row = 0; row < NUM_OF_TILES; row++)
-            for (int col = 0; col < NUM_OF_TILES; col++)
-                boardState[row][col] = null;
-
-        MovementLogic.whitePosition = whitePosition;
+    public MovementLogic(CheckersStartPosition whitePosition) {
+        this.whitePosition = whitePosition;
         int startBottomPos = 5;
         int endBottomPos = startBottomPos + ROWS_PER_COLOR;
 
-        PieceType curColor = whitePosition == CheckersStartPosition.WHITE_ON_BOTTOM ? PieceType.VANILLA : PieceType.CHOCOLATE;
+        PieceType curColor = whitePosition == CheckersStartPosition.VANILLA_ON_BOTTOM ? PieceType.VANILLA : PieceType.CHOCOLATE;
         for (int row = startBottomPos; row < endBottomPos; ++row)
             for (int col = row % 2; col < NUM_OF_TILES; col += 2)
                 boardState[row][col] = curColor;
 
         int startTopPos = 0;
 
-        curColor = whitePosition == MovementLogic.CheckersStartPosition.WHITE_ON_TOP ?  PieceType.VANILLA : PieceType.CHOCOLATE;
+        curColor = whitePosition == MovementLogic.CheckersStartPosition.VANILLA_ON_TOP ?  PieceType.VANILLA : PieceType.CHOCOLATE;
         for (int row = startTopPos; row < ROWS_PER_COLOR; ++row)
             for (int col = row % 2; col < NUM_OF_TILES; col += 2)
                 boardState[row][col] = curColor;
-
     }
 
-    public static int MoveCheckerOnce(int fromRow, int fromCol, int toRow, int toCol) {
-        int canCheckerMoveResult = CanCheckerMoveOnce(fromRow, fromCol, toRow, toCol);
+    public int moveCheckerOnce(int fromRow, int fromCol, int toRow, int toCol) {
+        int canCheckerMoveResult = canCheckerMoveOnce(fromRow, fromCol, toRow, toCol);
         if (canCheckerMoveResult == 0)
             return 0;
 
@@ -54,17 +49,17 @@ public class MovementLogic {
         }
 
         if (checkerToMove == PieceType.VANILLA) {
-            int promotionRow = (whitePosition == CheckersStartPosition.WHITE_ON_BOTTOM) ? 0 : NUM_OF_TILES - 1;
+            int promotionRow = (whitePosition == CheckersStartPosition.VANILLA_ON_BOTTOM) ? 0 : NUM_OF_TILES - 1;
             if (toRow == promotionRow) boardState[toRow][toCol] = PieceType.VANILLA_QUEEN;
         } else if (checkerToMove == PieceType.CHOCOLATE) {
-            int promotionRow = (whitePosition == CheckersStartPosition.WHITE_ON_BOTTOM) ? NUM_OF_TILES - 1 : 0;
+            int promotionRow = (whitePosition == CheckersStartPosition.VANILLA_ON_BOTTOM) ? NUM_OF_TILES - 1 : 0;
             if (toRow == promotionRow) boardState[toRow][toCol] = PieceType.CHOCOLATE_QUEEN;
         }
 
         return canCheckerMoveResult;
     }
 
-    public static int CanCheckerMoveOnce(int fromRow, int fromCol, int toRow, int toCol) {
+    public int canCheckerMoveOnce(int fromRow, int fromCol, int toRow, int toCol) {
         if (fromRow < 0 || fromCol < 0 || toRow < 0 || toCol < 0) return 0;
         int maxPossibleIndex = NUM_OF_TILES - 1;
         if (fromRow > maxPossibleIndex || fromCol > maxPossibleIndex || toRow > maxPossibleIndex || toCol > maxPossibleIndex)
@@ -109,8 +104,8 @@ public class MovementLogic {
 
             return 0;
         } else {
-            boolean movesUp = ((whitePosition == CheckersStartPosition.WHITE_ON_BOTTOM) == checkerValue.isVanilla());
-            boolean movesDown = ((whitePosition == CheckersStartPosition.WHITE_ON_BOTTOM) != checkerValue.isVanilla());
+            boolean movesUp = ((whitePosition == CheckersStartPosition.VANILLA_ON_BOTTOM) == checkerValue.isVanilla());
+            boolean movesDown = ((whitePosition == CheckersStartPosition.VANILLA_ON_BOTTOM) != checkerValue.isVanilla());
 
             if (rowDiff == 1) {
                 if (movesUp && rowDir == -1) return 1;
@@ -125,7 +120,7 @@ public class MovementLogic {
         }
     }
 
-    public static boolean HasAnyJumps(int row, int col) {
+    public boolean hasAnyJumps(int row, int col) {
         PieceType checkerValue = boardState[row][col];
         if (checkerValue == null) return false;
 
@@ -155,7 +150,7 @@ public class MovementLogic {
             }
         } else {
             for (int[] d : directions) {
-                if (CanCheckerMoveOnce(row, col, row + d[0] * 2, col + d[1] * 2) == 2) {
+                if (canCheckerMoveOnce(row, col, row + d[0] * 2, col + d[1] * 2) == 2) {
                     return true;
                 }
             }
@@ -163,7 +158,7 @@ public class MovementLogic {
         return false;
     }
 
-    private static boolean isEnemyOnTile(int row, int col, PieceType myPieceValue) {
+    private boolean isEnemyOnTile(int row, int col, PieceType myPieceValue) {
         if (row < 0 || col < 0 || row > NUM_OF_TILES - 1 || col > NUM_OF_TILES - 1)
             return false;
 
@@ -174,10 +169,10 @@ public class MovementLogic {
     }
 
     public enum CheckersStartPosition {
-        WHITE_ON_TOP, WHITE_ON_BOTTOM
+        VANILLA_ON_TOP, VANILLA_ON_BOTTOM
     }
 
-    public static boolean HasAnyValidMoves(int player) {
+    public boolean hasAnyValidMoves(int player) {
         for (int r = 0; r < NUM_OF_TILES; r++) {
             for (int c = 0; c < NUM_OF_TILES; c++) {
                 PieceType piece = boardState[r][c];
@@ -188,7 +183,7 @@ public class MovementLogic {
                 if (isCurrentPlayer) {
                     for (int tr = 0; tr < NUM_OF_TILES; tr++) {
                         for (int tc = 0; tc < NUM_OF_TILES; tc++) {
-                            if (CanCheckerMoveOnce(r, c, tr, tc) > 0) {
+                            if (canCheckerMoveOnce(r, c, tr, tc) > 0) {
                                 return true;
                             }
                         }

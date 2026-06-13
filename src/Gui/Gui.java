@@ -17,6 +17,8 @@ public class Gui extends JFrame {
     private int whiteSeconds = 0;
     private int blackSeconds = 0;
 
+    private MovementLogic logic;
+
     public Gui() {
         setTitle("Warcaby");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -33,7 +35,7 @@ public class Gui extends JFrame {
         menuBar.add(gameMenu);
         setJMenuBar(menuBar);
 
-        MovementLogic.Initialize(MovementLogic.CheckersStartPosition.WHITE_ON_BOTTOM);
+        logic = new MovementLogic(MovementLogic.CheckersStartPosition.VANILLA_ON_BOTTOM);
 
         JPanel topPanel = createPlayerPanel("Czekoladowe");
         blackTurnLabel = (JLabel) topPanel.getComponent(0);
@@ -45,7 +47,7 @@ public class Gui extends JFrame {
 
         add(topPanel, BorderLayout.NORTH);
 
-        add(new Board(this), BorderLayout.CENTER);
+        add(new Board(this, logic), BorderLayout.CENTER);
 
         add(bottomPanel, BorderLayout.SOUTH);
 
@@ -99,7 +101,7 @@ public class Gui extends JFrame {
     }
 
     public void checkWinCondition() {
-        if (!MovementLogic.HasAnyValidMoves(currentPlayer)) {
+        if (!logic.hasAnyValidMoves(currentPlayer)) {
             if (timer != null) timer.stop();
 
             Timer delayTimer = new Timer(300, _ -> {
