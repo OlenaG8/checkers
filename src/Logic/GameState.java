@@ -7,6 +7,8 @@ public class GameState {
     public final PieceType[][] board = new PieceType[NUM_OF_TILES][NUM_OF_TILES];
     public final StartPosition whitePosition;
 
+    public boolean isJumpingSequence;
+
     public GameState(StartPosition whitePosition) {
         this.whitePosition = whitePosition;
         int startBottomPos = 5;

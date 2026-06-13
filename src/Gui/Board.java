@@ -27,7 +27,6 @@ public class Board extends JPanel {
 
     private int selectedRow = -1;
     private int selectedCol = -1;
-    private boolean isJumpingSequence = false;
 
     private final Gui parentGUI;
     private final GameState state;
@@ -61,7 +60,7 @@ public class Board extends JPanel {
 
                 if (col < 0 || col > NUM_OF_TILES - 1 || row < 0 || row > NUM_OF_TILES - 1) return;
 
-                if (isJumpingSequence) {
+                if (state.isJumpingSequence) {
                     int moveResult = MovementLogic.canCheckerMoveOnce(state, selectedRow, selectedCol, row, col);
                     if (moveResult > 0) {
                         state.moveCheckerOnce(selectedRow, selectedCol, row, col);
@@ -89,7 +88,7 @@ public class Board extends JPanel {
                             } else if (moveResult == 2) {
                                 state.moveCheckerOnce(selectedRow, selectedCol, row, col);
                                 if (MovementLogic.hasAnyJumps(state, row, col)) {
-                                    isJumpingSequence = true;
+                                    state.isJumpingSequence = true;
                                     selectPiece(row, col);
                                 } else {
                                     endTurnLocal();
@@ -118,12 +117,12 @@ public class Board extends JPanel {
     private void selectPiece(int row, int col) {
         selectedRow = row;
         selectedCol = col;
-        allowedMoves = MovementLogic.getAllowedMoves(state, row, col, isJumpingSequence);
+        allowedMoves = MovementLogic.getAllowedMoves(state, row, col);
     }
 
     private void endTurnLocal() {
         unselectPiece();
-        isJumpingSequence = false;
+        state.isJumpingSequence = false;
 
         parentGUI.switchPlayer();
         parentGUI.checkWinCondition();
@@ -169,7 +168,7 @@ public class Board extends JPanel {
             int hX = (int) Math.round(tileCenterX - (highlightWidth / 2.0));
             int hY = (int) Math.round(tileCenterY - (highlightHeight / 2.0));
 
-            if (isJumpingSequence) {
+            if (state.isJumpingSequence) {
                 g2d.setColor(new Color(255, 0, 0, 80));
             } else {
                 g2d.setColor(new Color(0, 255, 0, 80));

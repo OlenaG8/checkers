@@ -140,13 +140,13 @@ public class MovementLogic {
         return false;
     }
 
-    public static List<Position> getAllowedMoves(GameState state, int row, int col, boolean isJumpingSequence) {
+    public static List<Position> getAllowedMoves(GameState state, int row, int col) {
         List<Position> moves = new ArrayList<>();
         for (int r = 0; r < NUM_OF_TILES; r++) {
             for (int c = 0; c < NUM_OF_TILES; c++) {
                 int moveType = canCheckerMoveOnce(state, row, col, r, c);
                 if (moveType > 0) {
-                    if (isJumpingSequence && moveType != 2) continue;
+                    if (state.isJumpingSequence && moveType != 2) continue;
                     moves.add(new Position(r, c));
                 }
             }
