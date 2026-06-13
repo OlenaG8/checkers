@@ -27,21 +27,24 @@ public class GameState {
                 board[row][col] = curColor;
     }
 
-    public void moveCheckerOnce(int fromRow, int fromCol, int toRow, int toCol) {
+    public MoveResult moveCheckerOnce(int fromRow, int fromCol, int toRow, int toCol) {
+        int res = MovementLogic.canCheckerMoveOnce(this, fromRow, fromCol, toRow, toCol);
         PieceType checkerToMove = board[fromRow][fromCol];
         board[fromRow][fromCol] = null;
         board[toRow][toCol] = checkerToMove;
 
-        int rowDir = Integer.compare(toRow, fromRow);
-        int colDir = Integer.compare(toCol, fromCol);
+        if (res == 2) {
+            int rowDir = Integer.compare(toRow, fromRow);
+            int colDir = Integer.compare(toCol, fromCol);
 
-        int r = fromRow + rowDir;
-        int c = fromCol + colDir;
+            int r = fromRow + rowDir;
+            int c = fromCol + colDir;
 
-        while (r != toRow && c != toCol) {
-            board[r][c] = null;
-            r += rowDir;
-            c += colDir;
+            while (r != toRow && c != toCol) {
+                board[r][c] = null;
+                r += rowDir;
+                c += colDir;
+            }
         }
 
         if (checkerToMove == PieceType.VANILLA) {
@@ -50,6 +53,12 @@ public class GameState {
         } else if (checkerToMove == PieceType.CHOCOLATE) {
             int promotionRow = (whitePosition == StartPosition.VANILLA_ON_BOTTOM) ? NUM_OF_TILES - 1 : 0;
             if (toRow == promotionRow) board[toRow][toCol] = PieceType.CHOCOLATE_QUEEN;
+        }
+        if (res == 2 && MovementLogic.hasAnyJumps(this, toRow, toCol)) {
+            this.isJumpingSequence = true;
+            return MoveResult.ENTER_JUMP_SEQUENCE;
+        } else {
+            return MoveResult.END_TURN;
         }
     }
 

@@ -2,6 +2,7 @@ package Gui;
 
 import Communication.Messages.Position;
 import Logic.GameState;
+import Logic.MoveResult;
 import Logic.MovementLogic;
 import Logic.PieceType;
 
@@ -63,13 +64,14 @@ public class Board extends JPanel {
                 if (state.isJumpingSequence) {
                     int moveResult = MovementLogic.canCheckerMoveOnce(state, selectedRow, selectedCol, row, col);
                     if (moveResult > 0) {
-                        state.moveCheckerOnce(selectedRow, selectedCol, row, col);
-                        if (moveResult == 2) {
-                            if (MovementLogic.hasAnyJumps(state, row, col)) {
-                                selectPiece(row, col);
-                            } else {
+                        MoveResult res = state.moveCheckerOnce(selectedRow, selectedCol, row, col);
+                        switch (res) {
+                            case END_TURN:
                                 endTurnLocal();
-                            }
+                                break;
+                            case ENTER_JUMP_SEQUENCE:
+                                selectPiece(row, col);
+                                break;
                         }
                     }
                 } else {
@@ -82,22 +84,22 @@ public class Board extends JPanel {
                             unselectPiece();
                         } else {
                             int moveResult = MovementLogic.canCheckerMoveOnce(state, selectedRow, selectedCol, row, col);
-                            if (moveResult == 1) {
-                                state.moveCheckerOnce(selectedRow, selectedCol, row, col);
-                                endTurnLocal();
-                            } else if (moveResult == 2) {
-                                state.moveCheckerOnce(selectedRow, selectedCol, row, col);
-                                if (MovementLogic.hasAnyJumps(state, row, col)) {
-                                    state.isJumpingSequence = true;
-                                    selectPiece(row, col);
-                                } else {
-                                    endTurnLocal();
-                                }
-                            } else {
+                            if (moveResult == 0) {
                                 if (isCurrentPlayerPiece(state.board[row][col])) {
                                     selectPiece(row, col);
                                 } else {
                                     unselectPiece();
+                                }
+                            } else {
+                                MoveResult res = state.moveCheckerOnce(selectedRow, selectedCol, row, col);
+                                switch (res) {
+                                    case END_TURN:
+                                        endTurnLocal();
+                                        break;
+                                    case ENTER_JUMP_SEQUENCE:
+                                        //state.isJumpingSequence = true;
+                                        selectPiece(row, col);
+                                        break;
                                 }
                             }
                         }
