@@ -12,7 +12,7 @@ public class Menu extends JFrame {
     private BufferedImage backgroundImage;
 
     public Menu() {
-        setTitle("Checkers Tactics - Menu Główne");
+        setTitle("Menu Główne");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
 

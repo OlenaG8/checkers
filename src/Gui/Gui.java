@@ -127,6 +127,7 @@ public class Gui extends JFrame {
             delayTimer.start();
         }
     }
+
     public void returnToMenu() {
         if (timer != null) timer.stop();
         this.dispose();

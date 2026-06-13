@@ -4,27 +4,26 @@ public class MovementLogic {
     public static final int NUM_OF_TILES = 8;
     public static final int ROWS_PER_COLOR = 3;
 
-    // 0 - pusty, 1 - biała figura, 2 - czarna figura, 3 - biała damka, 4 - czarna damka
-    public static final int[][] boardState = new int[NUM_OF_TILES][NUM_OF_TILES];
+    public static final PieceType[][] boardState = new PieceType[NUM_OF_TILES][NUM_OF_TILES];
     private static CheckersStartPosition whitePosition = MovementLogic.CheckersStartPosition.WHITE_ON_BOTTOM;
 
     public static void Initialize(CheckersStartPosition whitePosition) {
         for (int row = 0; row < NUM_OF_TILES; row++)
             for (int col = 0; col < NUM_OF_TILES; col++)
-                boardState[row][col] = 0;
+                boardState[row][col] = null;
 
         MovementLogic.whitePosition = whitePosition;
         int startBottomPos = 5;
         int endBottomPos = startBottomPos + ROWS_PER_COLOR;
 
-        int curColor = whitePosition == CheckersStartPosition.WHITE_ON_BOTTOM ? 1 : 2;
+        PieceType curColor = whitePosition == CheckersStartPosition.WHITE_ON_BOTTOM ? PieceType.VANILLA : PieceType.CHOCOLATE;
         for (int row = startBottomPos; row < endBottomPos; ++row)
             for (int col = row % 2; col < NUM_OF_TILES; col += 2)
                 boardState[row][col] = curColor;
 
         int startTopPos = 0;
 
-        curColor = whitePosition == MovementLogic.CheckersStartPosition.WHITE_ON_TOP ? 1 : 2;
+        curColor = whitePosition == MovementLogic.CheckersStartPosition.WHITE_ON_TOP ?  PieceType.VANILLA : PieceType.CHOCOLATE;
         for (int row = startTopPos; row < ROWS_PER_COLOR; ++row)
             for (int col = row % 2; col < NUM_OF_TILES; col += 2)
                 boardState[row][col] = curColor;
@@ -36,8 +35,8 @@ public class MovementLogic {
         if (canCheckerMoveResult == 0)
             return 0;
 
-        int checkerToMove = boardState[fromRow][fromCol];
-        boardState[fromRow][fromCol] = 0;
+        PieceType checkerToMove = boardState[fromRow][fromCol];
+        boardState[fromRow][fromCol] = null;
         boardState[toRow][toCol] = checkerToMove;
 
         if (canCheckerMoveResult == 2) {
@@ -48,18 +47,18 @@ public class MovementLogic {
             int c = fromCol + colDir;
 
             while (r != toRow && c != toCol) {
-                boardState[r][c] = 0;
+                boardState[r][c] = null;
                 r += rowDir;
                 c += colDir;
             }
         }
 
-        if (checkerToMove == 1) {
+        if (checkerToMove == PieceType.VANILLA) {
             int promotionRow = (whitePosition == CheckersStartPosition.WHITE_ON_BOTTOM) ? 0 : NUM_OF_TILES - 1;
-            if (toRow == promotionRow) boardState[toRow][toCol] = 3;
-        } else if (checkerToMove == 2) {
+            if (toRow == promotionRow) boardState[toRow][toCol] = PieceType.VANILLA_QUEEN;
+        } else if (checkerToMove == PieceType.CHOCOLATE) {
             int promotionRow = (whitePosition == CheckersStartPosition.WHITE_ON_BOTTOM) ? NUM_OF_TILES - 1 : 0;
-            if (toRow == promotionRow) boardState[toRow][toCol] = 4;
+            if (toRow == promotionRow) boardState[toRow][toCol] = PieceType.CHOCOLATE_QUEEN;
         }
 
         return canCheckerMoveResult;
@@ -71,9 +70,9 @@ public class MovementLogic {
         if (fromRow > maxPossibleIndex || fromCol > maxPossibleIndex || toRow > maxPossibleIndex || toCol > maxPossibleIndex)
             return 0;
 
-        int checkerValue = boardState[fromRow][fromCol];
-        if (checkerValue == 0) return 0;
-        if (boardState[toRow][toCol] != 0) return 0;
+        PieceType checkerValue = boardState[fromRow][fromCol];
+        if (checkerValue == null) return 0;
+        if (boardState[toRow][toCol] != null) return 0;
 
         int rowDiff = Math.abs(toRow - fromRow);
         int colDiff = Math.abs(toCol - fromCol);
@@ -83,10 +82,7 @@ public class MovementLogic {
         int rowDir = Integer.compare(toRow, fromRow);
         int colDir = Integer.compare(toCol, fromCol);
 
-        boolean isWhite = (checkerValue == 1 || checkerValue == 3);
-        boolean isKing = (checkerValue == 3 || checkerValue == 4);
-
-        if (isKing) {
+        if (checkerValue.isQueen()) {
             int piecesInBetween = 0;
             int enemyRow = -1;
             int enemyCol = -1;
@@ -95,7 +91,7 @@ public class MovementLogic {
             int c = fromCol + colDir;
 
             while (r != toRow && c != toCol) {
-                if (boardState[r][c] != 0) {
+                if (boardState[r][c] != null) {
                     piecesInBetween++;
                     enemyRow = r;
                     enemyCol = c;
@@ -113,8 +109,8 @@ public class MovementLogic {
 
             return 0;
         } else {
-            boolean movesUp = ((whitePosition == CheckersStartPosition.WHITE_ON_BOTTOM) == isWhite);
-            boolean movesDown = ((whitePosition == CheckersStartPosition.WHITE_ON_BOTTOM) != isWhite);
+            boolean movesUp = ((whitePosition == CheckersStartPosition.WHITE_ON_BOTTOM) == checkerValue.isVanilla());
+            boolean movesDown = ((whitePosition == CheckersStartPosition.WHITE_ON_BOTTOM) != checkerValue.isVanilla());
 
             if (rowDiff == 1) {
                 if (movesUp && rowDir == -1) return 1;
@@ -130,24 +126,23 @@ public class MovementLogic {
     }
 
     public static boolean HasAnyJumps(int row, int col) {
-        int checkerValue = boardState[row][col];
-        if (checkerValue == 0) return false;
+        PieceType checkerValue = boardState[row][col];
+        if (checkerValue == null) return false;
 
-        boolean isKing = (checkerValue == 3 || checkerValue == 4);
         int[][] directions = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
 
-        if (isKing) {
+        if (checkerValue.isQueen()) {
             for (int[] d : directions) {
                 int r = row + d[0];
                 int c = col + d[1];
 
                 while (r >= 0 && r < NUM_OF_TILES && c >= 0 && c < NUM_OF_TILES) {
-                    if (boardState[r][c] != 0) {
+                    if (boardState[r][c] != null) {
                         if (isEnemyOnTile(r, c, checkerValue)) {
                             int landR = r + d[0];
                             int landC = c + d[1];
                             if (landR >= 0 && landR < NUM_OF_TILES && landC >= 0 && landC < NUM_OF_TILES) {
-                                if (boardState[landR][landC] == 0) {
+                                if (boardState[landR][landC] == null) {
                                     return true;
                                 }
                             }
@@ -168,44 +163,14 @@ public class MovementLogic {
         return false;
     }
 
-    private static boolean isEnemyOnTile(int row, int col, int myPieceValue) {
+    private static boolean isEnemyOnTile(int row, int col, PieceType myPieceValue) {
         if (row < 0 || col < 0 || row > NUM_OF_TILES - 1 || col > NUM_OF_TILES - 1)
             return false;
 
-        int targetValue = boardState[row][col];
-        if (targetValue == 0) return false;
+        PieceType targetValue = boardState[row][col];
+        if (targetValue == null) return false;
 
-        boolean iAmWhite = (myPieceValue == 1 || myPieceValue == 3);
-        boolean targetIsBlack = (targetValue == 2 || targetValue == 4);
-        boolean targetIsWhite = (targetValue == 1 || targetValue == 3);
-
-        return iAmWhite ? targetIsBlack : targetIsWhite;
-    }
-
-    public static void Preview() {
-        for (int row = 0; row < NUM_OF_TILES; ++row) {
-            for (int col = 0; col < NUM_OF_TILES; ++col) {
-                int positionValue = boardState[row][col];
-                switch (positionValue) {
-                    case 0:
-                        System.out.print("[ ] ");
-                        break;
-                    case 1:
-                        System.out.print("[W] ");
-                        break;
-                    case 2:
-                        System.out.print("[B] ");
-                        break;
-                    case 3:
-                        System.out.print("[W*]");
-                        break;
-                    case 4:
-                        System.out.print("[B*]");
-                        break;
-                }
-            }
-            System.out.println();
-        }
+        return myPieceValue.isVanilla() != targetValue.isVanilla();
     }
 
     public enum CheckersStartPosition {
@@ -215,10 +180,10 @@ public class MovementLogic {
     public static boolean HasAnyValidMoves(int player) {
         for (int r = 0; r < NUM_OF_TILES; r++) {
             for (int c = 0; c < NUM_OF_TILES; c++) {
-                int piece = boardState[r][c];
-                if (piece == 0) continue;
+                PieceType piece = boardState[r][c];
+                if (piece == null) continue;
 
-                boolean isCurrentPlayer = (player == 1) ? (piece == 1 || piece == 3) : (piece == 2 || piece == 4);
+                boolean isCurrentPlayer = (player == 1) == piece.isVanilla();
 
                 if (isCurrentPlayer) {
                     for (int tr = 0; tr < NUM_OF_TILES; tr++) {

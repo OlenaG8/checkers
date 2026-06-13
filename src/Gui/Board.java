@@ -1,6 +1,7 @@
 package Gui;
 
 import Logic.MovementLogic;
+import Logic.PieceType;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -109,10 +110,10 @@ public class Board extends JPanel {
         parentGUI.checkWinCondition();
     }
 
-    private boolean isCurrentPlayerPiece(int pieceType) {
+    private boolean isCurrentPlayerPiece(PieceType pieceType) {
         int currentPlayer = parentGUI.getCurrentPlayer();
-        if (currentPlayer == 1) return pieceType == 1 || pieceType == 3;
-        if (currentPlayer == 2) return pieceType == 2 || pieceType == 4;
+        if (currentPlayer == 1) return pieceType.isVanilla();
+        if (currentPlayer == 2) return !pieceType.isVanilla();
         return false;
     }
 
@@ -180,9 +181,9 @@ public class Board extends JPanel {
 
         for (int row = 0; row < NUM_OF_TILES; row++) {
             for (int col = 0; col < NUM_OF_TILES; col++) {
-                int pieceType = MovementLogic.boardState[row][col];
+                PieceType pieceType = MovementLogic.boardState[row][col];
 
-                if (pieceType != 0) {
+                if (pieceType != null) {
                     double tileCenterX = (col * tileWidth) + (tileWidth / 2.0);
                     double tileCenterY = (row * tileHeight) + (tileHeight / 2.0);
 
@@ -191,13 +192,13 @@ public class Board extends JPanel {
                     int w = (int) Math.round(pieceWidth);
                     int h = (int) Math.round(pieceHeight);
 
-                    if (pieceType == 1 && whitePieceImage != null) {
+                    if (pieceType == PieceType.VANILLA && whitePieceImage != null) {
                         g2d.drawImage(whitePieceImage, x, y, w, h, this);
-                    } else if (pieceType == 2 && blackPieceImage != null) {
+                    } else if (pieceType == PieceType.CHOCOLATE && blackPieceImage != null) {
                         g2d.drawImage(blackPieceImage, x, y, w, h, this);
-                    } else if (pieceType == 3 && whiteQueenImage != null) {
+                    } else if (pieceType == PieceType.VANILLA_QUEEN && whiteQueenImage != null) {
                         g2d.drawImage(whiteQueenImage, x, y, w, h, this);
-                    } else if (pieceType == 4 && blackQueenImage != null) {
+                    } else if (pieceType == PieceType.CHOCOLATE_QUEEN && blackQueenImage != null) {
                         g2d.drawImage(blackQueenImage, x, y, w, h, this);
                     }
                 }
