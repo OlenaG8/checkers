@@ -1,6 +1,7 @@
 package Gui;
 
 import Communication.Messages.Position;
+import Logic.GameState;
 import Logic.MovementLogic;
 import Logic.PieceType;
 
@@ -29,15 +30,15 @@ public class Board extends JPanel {
     private boolean isJumpingSequence = false;
 
     private final Gui parentGUI;
-    private final MovementLogic logic;
+    private final GameState state;
 
     private List<Position> allowedMoves = Collections.emptyList();
 
-    public Board(Gui parentGUI, MovementLogic logic) {
+    public Board(Gui parentGUI, GameState state) {
         this.parentGUI = parentGUI;
         setBackground(new Color(51, 49, 43));
         setPreferredSize(new Dimension(850, 850));
-        this.logic = logic;
+        this.state = state;
 
         try {
             boardImage = ImageIO.read(new File("images/chessboard.png"));
@@ -61,35 +62,40 @@ public class Board extends JPanel {
                 if (col < 0 || col > NUM_OF_TILES - 1 || row < 0 || row > NUM_OF_TILES - 1) return;
 
                 if (isJumpingSequence) {
-                    int moveResult = logic.moveCheckerOnce(selectedRow, selectedCol, row, col);
-                    if (moveResult == 2) {
-                        if (logic.hasAnyJumps(row, col)) {
-                            selectPiece(row, col);
-                        } else {
-                            endTurnLocal();
+                    int moveResult = MovementLogic.canCheckerMoveOnce(state, selectedRow, selectedCol, row, col);
+                    if (moveResult > 0) {
+                        state.moveCheckerOnce(selectedRow, selectedCol, row, col);
+                        if (moveResult == 2) {
+                            if (MovementLogic.hasAnyJumps(state, row, col)) {
+                                selectPiece(row, col);
+                            } else {
+                                endTurnLocal();
+                            }
                         }
                     }
                 } else {
                     if (selectedRow == -1) {
-                        if (isCurrentPlayerPiece(logic.boardState[row][col])) {
+                        if (isCurrentPlayerPiece(state.board[row][col])) {
                             selectPiece(row, col);
                         }
                     } else {
                         if (row == selectedRow && col == selectedCol) {
                             unselectPiece();
                         } else {
-                            int moveResult = logic.moveCheckerOnce(selectedRow, selectedCol, row, col);
+                            int moveResult = MovementLogic.canCheckerMoveOnce(state, selectedRow, selectedCol, row, col);
                             if (moveResult == 1) {
+                                state.moveCheckerOnce(selectedRow, selectedCol, row, col);
                                 endTurnLocal();
                             } else if (moveResult == 2) {
-                                if (logic.hasAnyJumps(row, col)) {
+                                state.moveCheckerOnce(selectedRow, selectedCol, row, col);
+                                if (MovementLogic.hasAnyJumps(state, row, col)) {
                                     isJumpingSequence = true;
                                     selectPiece(row, col);
                                 } else {
                                     endTurnLocal();
                                 }
                             } else {
-                                if (isCurrentPlayerPiece(logic.boardState[row][col])) {
+                                if (isCurrentPlayerPiece(state.board[row][col])) {
                                     selectPiece(row, col);
                                 } else {
                                     unselectPiece();
@@ -112,7 +118,7 @@ public class Board extends JPanel {
     private void selectPiece(int row, int col) {
         selectedRow = row;
         selectedCol = col;
-        allowedMoves = logic.getAllowedMoves(row, col, isJumpingSequence);
+        allowedMoves = MovementLogic.getAllowedMoves(state, row, col, isJumpingSequence);
     }
 
     private void endTurnLocal() {
@@ -188,7 +194,7 @@ public class Board extends JPanel {
 
         for (int row = 0; row < NUM_OF_TILES; row++) {
             for (int col = 0; col < NUM_OF_TILES; col++) {
-                PieceType pieceType = logic.boardState[row][col];
+                PieceType pieceType = state.board[row][col];
 
                 if (pieceType != null) {
                     double tileCenterX = (col * tileWidth) + (tileWidth / 2.0);
