@@ -1,5 +1,10 @@
 package Logic;
 
+import Communication.Messages.Position;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class MovementLogic {
     public static final int NUM_OF_TILES = 8;
     public static final int ROWS_PER_COLOR = 3;
@@ -169,7 +174,8 @@ public class MovementLogic {
     }
 
     public enum CheckersStartPosition {
-        VANILLA_ON_TOP, VANILLA_ON_BOTTOM
+        VANILLA_ON_TOP,
+        VANILLA_ON_BOTTOM
     }
 
     public boolean hasAnyValidMoves(int player) {
@@ -192,5 +198,19 @@ public class MovementLogic {
             }
         }
         return false;
+    }
+
+    public List<Position> getAllowedMoves(int row, int col, boolean isJumpingSequence) {
+        List<Position> moves = new ArrayList<>();
+        for (int r = 0; r < NUM_OF_TILES; r++) {
+            for (int c = 0; c < NUM_OF_TILES; c++) {
+                int moveType = canCheckerMoveOnce(row, col, r, c);
+                if (moveType > 0) {
+                    if (isJumpingSequence && moveType != 2) continue;
+                    moves.add(new Position(r, c));
+                }
+            }
+        }
+        return moves;
     }
 }

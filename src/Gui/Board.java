@@ -1,5 +1,6 @@
 package Gui;
 
+import Communication.Messages.Position;
 import Logic.MovementLogic;
 import Logic.PieceType;
 
@@ -11,6 +12,8 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 public class Board extends JPanel {
     public static final int NUM_OF_TILES = 8;
@@ -27,6 +30,8 @@ public class Board extends JPanel {
 
     private final Gui parentGUI;
     private final MovementLogic logic;
+
+    private List<Position> allowedMoves = Collections.emptyList();
 
     public Board(Gui parentGUI, MovementLogic logic) {
         this.parentGUI = parentGUI;
@@ -59,8 +64,7 @@ public class Board extends JPanel {
                     int moveResult = logic.moveCheckerOnce(selectedRow, selectedCol, row, col);
                     if (moveResult == 2) {
                         if (logic.hasAnyJumps(row, col)) {
-                            selectedRow = row;
-                            selectedCol = col;
+                            selectPiece(row, col);
                         } else {
                             endTurnLocal();
                         }
@@ -68,32 +72,27 @@ public class Board extends JPanel {
                 } else {
                     if (selectedRow == -1) {
                         if (isCurrentPlayerPiece(logic.boardState[row][col])) {
-                            selectedRow = row;
-                            selectedCol = col;
+                            selectPiece(row, col);
                         }
                     } else {
                         if (row == selectedRow && col == selectedCol) {
-                            selectedRow = -1;
-                            selectedCol = -1;
+                            unselectPiece();
                         } else {
                             int moveResult = logic.moveCheckerOnce(selectedRow, selectedCol, row, col);
                             if (moveResult == 1) {
                                 endTurnLocal();
                             } else if (moveResult == 2) {
                                 if (logic.hasAnyJumps(row, col)) {
-                                    selectedRow = row;
-                                    selectedCol = col;
                                     isJumpingSequence = true;
+                                    selectPiece(row, col);
                                 } else {
                                     endTurnLocal();
                                 }
                             } else {
                                 if (isCurrentPlayerPiece(logic.boardState[row][col])) {
-                                    selectedRow = row;
-                                    selectedCol = col;
+                                    selectPiece(row, col);
                                 } else {
-                                    selectedRow = -1;
-                                    selectedCol = -1;
+                                    unselectPiece();
                                 }
                             }
                         }
@@ -104,12 +103,23 @@ public class Board extends JPanel {
         });
     }
 
-    private void endTurnLocal() {
+    private void unselectPiece() {
         selectedRow = -1;
         selectedCol = -1;
-        isJumpingSequence = false;
-        parentGUI.switchPlayer();
+        allowedMoves = Collections.emptyList();
+    }
 
+    private void selectPiece(int row, int col) {
+        selectedRow = row;
+        selectedCol = col;
+        allowedMoves = logic.getAllowedMoves(row, col, isJumpingSequence);
+    }
+
+    private void endTurnLocal() {
+        unselectPiece();
+        isJumpingSequence = false;
+
+        parentGUI.switchPlayer();
         parentGUI.checkWinCondition();
     }
 
@@ -165,21 +175,14 @@ public class Board extends JPanel {
             double moveHighlightWidth = tileWidth * moveHighlightRatio;
             double moveHighlightHeight = tileHeight * moveHighlightRatio;
 
-            for (int r = 0; r < NUM_OF_TILES; r++) {
-                for (int c = 0; c < NUM_OF_TILES; c++) {
-                    int moveType = logic.canCheckerMoveOnce(selectedRow, selectedCol, r, c);
-                    if (moveType > 0) {
-                        if (isJumpingSequence && moveType != 2) continue;
+            for (Position move : allowedMoves) {
+                double targetCenterX = (move.getCol() * tileWidth) + (tileWidth / 2.0);
+                double targetCenterY = (move.getRow() * tileHeight) + (tileHeight / 2.0);
 
-                        double targetCenterX = (c * tileWidth) + (tileWidth / 2.0);
-                        double targetCenterY = (r * tileHeight) + (tileHeight / 2.0);
+                int thX = (int) Math.round(targetCenterX - (moveHighlightWidth / 2.0));
+                int thY = (int) Math.round(targetCenterY - (moveHighlightHeight / 2.0));
 
-                        int thX = (int) Math.round(targetCenterX - (moveHighlightWidth / 2.0));
-                        int thY = (int) Math.round(targetCenterY - (moveHighlightHeight / 2.0));
-
-                        g2d.fillOval(thX, thY, (int) Math.round(moveHighlightWidth), (int) Math.round(moveHighlightHeight));
-                    }
-                }
+                g2d.fillOval(thX, thY, (int) Math.round(moveHighlightWidth), (int) Math.round(moveHighlightHeight));
             }
         }
 
