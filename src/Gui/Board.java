@@ -1,5 +1,6 @@
 package Gui;
 
+import Communication.Client;
 import Communication.Messages.Position;
 import Logic.GameState;
 import Logic.MoveResult;
@@ -30,12 +31,14 @@ public class Board extends JPanel {
     private int selectedCol = -1;
 
     private final Gui parentGUI;
+    private final Client client;
     private final GameState state;
 
     private List<Position> allowedMoves = Collections.emptyList();
 
-    public Board(Gui parentGUI, GameState state) {
+    public Board(Gui parentGUI, GameState state, Client client) {
         this.parentGUI = parentGUI;
+        this.client = client;
         setBackground(new Color(51, 49, 43));
         setPreferredSize(new Dimension(850, 850));
         this.state = state;
@@ -64,6 +67,7 @@ public class Board extends JPanel {
                 if (state.isJumpingSequence) {
                     int moveResult = MovementLogic.canCheckerMoveOnce(state, selectedRow, selectedCol, row, col);
                     if (moveResult > 0) {
+                        client.moveCheckerOnce(selectedRow, selectedCol, row, col);
                         MoveResult res = state.moveCheckerOnce(selectedRow, selectedCol, row, col);
                         switch (res) {
                             case END_TURN:
@@ -91,13 +95,13 @@ public class Board extends JPanel {
                                     unselectPiece();
                                 }
                             } else {
+                                client.moveCheckerOnce(selectedRow, selectedCol, row, col);
                                 MoveResult res = state.moveCheckerOnce(selectedRow, selectedCol, row, col);
                                 switch (res) {
                                     case END_TURN:
                                         endTurnLocal();
                                         break;
                                     case ENTER_JUMP_SEQUENCE:
-                                        //state.isJumpingSequence = true;
                                         selectPiece(row, col);
                                         break;
                                 }

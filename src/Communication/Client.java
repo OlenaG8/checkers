@@ -1,5 +1,8 @@
 package Communication;
 
+import Logic.GameState;
+import Logic.MoveResult;
+
 import java.io.*;
 import java.net.Socket;
 import java.net.SocketException;
@@ -9,6 +12,8 @@ public class Client {
     private ObjectOutputStream out;
     private ObjectInputStream in;
     private Socket clientSocket;
+
+    private GameState state = new GameState(GameState.StartPosition.VANILLA_ON_BOTTOM);
 
     public Client() {
     }
@@ -28,6 +33,13 @@ public class Client {
         out.close();
         in.close();
         clientSocket.close();
+    }
+
+    public void moveCheckerOnce(int selectedRow, int selectedCol, int row, int col) {
+        MoveResult res = state.moveCheckerOnce(selectedRow, selectedCol, row, col);
+        if (res == MoveResult.INVALID_MOVE) {
+            throw new IllegalStateException("Unexpected move result: " + res);
+        }
     }
 
     private class ServerHandler extends Thread {

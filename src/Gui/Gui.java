@@ -1,5 +1,6 @@
 package Gui;
 
+import Communication.Client;
 import Logic.GameState;
 import Logic.MovementLogic;
 
@@ -19,6 +20,7 @@ public class Gui extends JFrame {
     private int blackSeconds = 0;
 
     private GameState state;
+    private Client client = new Client();
 
     public Gui() {
         setTitle("Warcaby");
@@ -62,7 +64,7 @@ public class Gui extends JFrame {
                 }
             }
         };
-        boardWrapper.add(new Board(this, state));
+        boardWrapper.add(new Board(this, state, client));
         boardWrapper.setBackground(new Color(51, 49, 43));
         add(boardWrapper, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
