@@ -1,5 +1,7 @@
 package Gui;
 
+import Communication.Client;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
@@ -119,9 +121,17 @@ public class Menu extends JFrame {
     }
 
     private void startLocalGame() {
+        Client client;
+        try {
+            client = new Client("127.0.0.1");
+        } catch (IOException e) {
+            System.out.println("Unable to connect to server: " + e.getMessage());
+            return;
+        }
+
         this.dispose();
         SwingUtilities.invokeLater(() -> {
-            Gui gameWindow = new Gui();
+            Gui gameWindow = new Gui(client);
             gameWindow.setVisible(true);
         });
     }

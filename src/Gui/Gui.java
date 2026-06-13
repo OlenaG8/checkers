@@ -1,7 +1,6 @@
 package Gui;
 
 import Communication.Client;
-import Logic.GameState;
 import Logic.MovementLogic;
 
 import javax.swing.*;
@@ -19,10 +18,7 @@ public class Gui extends JFrame {
     private int whiteSeconds = 0;
     private int blackSeconds = 0;
 
-    private GameState state;
-    private Client client = new Client();
-
-    public Gui() {
+    public Gui(Client client) {
         setTitle("Warcaby");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -37,8 +33,6 @@ public class Gui extends JFrame {
         gameMenu.add(returnItem);
         menuBar.add(gameMenu);
         setJMenuBar(menuBar);
-
-        state = new GameState(GameState.StartPosition.VANILLA_ON_BOTTOM);
 
         JPanel topPanel = createPlayerPanel("Czekoladowe");
         blackTurnLabel = (JLabel) topPanel.getComponent(0);
@@ -64,7 +58,7 @@ public class Gui extends JFrame {
                 }
             }
         };
-        boardWrapper.add(new Board(this, state, client));
+        boardWrapper.add(new Board(this, client));
         boardWrapper.setBackground(new Color(51, 49, 43));
         add(boardWrapper, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
@@ -118,34 +112,32 @@ public class Gui extends JFrame {
         return currentPlayer;
     }
 
-    public void checkWinCondition() {
-        if (!MovementLogic.hasAnyValidMoves(state, currentPlayer)) {
-            if (timer != null) timer.stop();
+    public void handleWinCondition() {
+        if (timer != null) timer.stop();
 
-            Timer delayTimer = new Timer(300, _ -> {
-                int winner = (currentPlayer == 1) ? 2 : 1;
-                String winnerName = (winner == 1) ? "Waniliowe" : "Czekoladowe";
+        Timer delayTimer = new Timer(300, _ -> {
+            int winner = (currentPlayer == 1) ? 2 : 1;
+            String winnerName = (winner == 1) ? "Waniliowe" : "Czekoladowe";
 
-                Object[] options = {"Powrót do Menu", "Opuść grę"};
-                int choice = JOptionPane.showOptionDialog(this,
-                        "Wygrywają " + winnerName + "!\nGratulacje!",
-                        "Podsumowanie",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.PLAIN_MESSAGE,
-                        null,
-                        options,
-                        options[0]);
+            Object[] options = {"Powrót do Menu", "Opuść grę"};
+            int choice = JOptionPane.showOptionDialog(this,
+                    "Wygrywają " + winnerName + "!\nGratulacje!",
+                    "Podsumowanie",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.PLAIN_MESSAGE,
+                    null,
+                    options,
+                    options[0]);
 
-                if (choice == 0) {
-                    returnToMenu();
-                } else {
-                    System.exit(0);
-                }
-            });
+            if (choice == 0) {
+                returnToMenu();
+            } else {
+                System.exit(0);
+            }
+        });
 
-            delayTimer.setRepeats(false);
-            delayTimer.start();
-        }
+        delayTimer.setRepeats(false);
+        delayTimer.start();
     }
 
     public void returnToMenu() {

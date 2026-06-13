@@ -1,15 +1,18 @@
 package Communication;
 
+import Communication.Messages.Move;
+import Logic.GameState;
+import Logic.MoveResult;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.sql.Date;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class Server {
     private ServerSocket serverSocket;
     private static final int PORT = 7777;
+
+    private final GameState state = new GameState(GameState.StartPosition.VANILLA_ON_BOTTOM);
 
     static void main() throws IOException {
         Server server = new Server();
@@ -18,10 +21,9 @@ public class Server {
 
     public void start(int port) throws IOException {
         serverSocket = new ServerSocket(port);
-        System.out.println("Communication.Server started");
-        Timer schedule = new Timer(true);
+        System.out.println("Server started");
         while (true) {
-            new ClientHandler(serverSocket.accept(), schedule).start();
+            new ConnectionHandler(serverSocket.accept(), state).start();
         }
     }
 
@@ -29,38 +31,35 @@ public class Server {
         serverSocket.close();
     }
 
-    private static class ClientHandler extends Thread {
+    private static class ConnectionHandler extends Thread {
         private final Socket clientSocket;
-        private final Timer schedule;
+        private final GameState state;
 
-        public ClientHandler(Socket socket, Timer schedule) {
+        public ConnectionHandler(Socket socket, GameState state) {
             this.clientSocket = socket;
-            this.schedule = schedule;
+            this.state = state;
         }
 
         @Override
         public void run() {
-            System.out.println("Communication.Client connected");
+            System.out.println("Client connected");
             try {
                 ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
                 ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
 
                 Object message;
                 while ((message = in.readObject()) != null) {
-                    if (message instanceof Message n) {
-                        System.out.println("Received notification: " + n.getMessage());
-                        schedule.schedule(new TimerTask() {
-                            @Override
-                            public void run() {
-                                try {
-                                    out.writeObject(n);
-                                } catch (IOException e) {
-                                    System.out.println("Failed to send a notification to a client: " + e.getMessage());
-                                }
-                            }
-                        }, Date.from(n.getAlertTime()));
+                    if (message instanceof Move move) {
+                        System.out.println("Received move: " + move);
+                        MoveResult res = state.move(
+                                move.getFrom().getRow(),
+                                move.getFrom().getCol(),
+                                move.getTo().getRow(),
+                                move.getTo().getCol()
+                        );
+                        sendMessage(out, res);
                     } else {
-                        System.out.println("Communication.Server received an unrecognized message");
+                        System.out.println("Server received an unrecognized message");
                     }
                 }
 
@@ -68,10 +67,18 @@ public class Server {
                 out.close();
                 clientSocket.close();
             } catch (IOException e) {
-                System.out.println("Communication.Client disconnected");
+                System.out.println("Client disconnected");
             }
             catch (ClassNotFoundException e) {
                 System.out.println("Exception reading from the client: " + e.getMessage());
+            }
+        }
+
+        private void sendMessage(ObjectOutputStream out, Object msg) {
+            try {
+                out.writeObject(msg);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }
     }

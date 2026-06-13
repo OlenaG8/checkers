@@ -32,16 +32,16 @@ public class Board extends JPanel {
 
     private final Gui parentGUI;
     private final Client client;
-    private final GameState state;
+    private final GameState state = new GameState(GameState.StartPosition.VANILLA_ON_BOTTOM);
 
     private List<Position> allowedMoves = Collections.emptyList();
 
-    public Board(Gui parentGUI, GameState state, Client client) {
+    public Board(Gui parentGUI, Client client) {
         this.parentGUI = parentGUI;
         this.client = client;
+
         setBackground(new Color(51, 49, 43));
         setPreferredSize(new Dimension(850, 850));
-        this.state = state;
 
         try {
             boardImage = ImageIO.read(new File("images/chessboard.png"));
@@ -65,10 +65,10 @@ public class Board extends JPanel {
                 if (col < 0 || col > NUM_OF_TILES - 1 || row < 0 || row > NUM_OF_TILES - 1) return;
 
                 if (state.isJumpingSequence) {
-                    int moveResult = MovementLogic.canCheckerMoveOnce(state, selectedRow, selectedCol, row, col);
+                    int moveResult = MovementLogic.canMove(state, selectedRow, selectedCol, row, col);
                     if (moveResult > 0) {
-                        client.moveCheckerOnce(selectedRow, selectedCol, row, col);
-                        MoveResult res = state.moveCheckerOnce(selectedRow, selectedCol, row, col);
+                        client.move(selectedRow, selectedCol, row, col);
+                        MoveResult res = state.move(selectedRow, selectedCol, row, col);
                         switch (res) {
                             case END_TURN:
                                 endTurnLocal();
@@ -87,7 +87,7 @@ public class Board extends JPanel {
                         if (row == selectedRow && col == selectedCol) {
                             unselectPiece();
                         } else {
-                            int moveResult = MovementLogic.canCheckerMoveOnce(state, selectedRow, selectedCol, row, col);
+                            int moveResult = MovementLogic.canMove(state, selectedRow, selectedCol, row, col);
                             if (moveResult == 0) {
                                 if (isCurrentPlayerPiece(state.board[row][col])) {
                                     selectPiece(row, col);
@@ -95,8 +95,8 @@ public class Board extends JPanel {
                                     unselectPiece();
                                 }
                             } else {
-                                client.moveCheckerOnce(selectedRow, selectedCol, row, col);
-                                MoveResult res = state.moveCheckerOnce(selectedRow, selectedCol, row, col);
+                                client.move(selectedRow, selectedCol, row, col);
+                                MoveResult res = state.move(selectedRow, selectedCol, row, col);
                                 switch (res) {
                                     case END_TURN:
                                         endTurnLocal();
@@ -131,7 +131,9 @@ public class Board extends JPanel {
         state.isJumpingSequence = false;
 
         parentGUI.switchPlayer();
-        parentGUI.checkWinCondition();
+        if (!MovementLogic.hasAnyValidMoves(state, parentGUI.getCurrentPlayer())) {
+            parentGUI.handleWinCondition();
+        }
     }
 
     private boolean isCurrentPlayerPiece(PieceType pieceType) {

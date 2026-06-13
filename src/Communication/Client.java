@@ -1,6 +1,7 @@
 package Communication;
 
-import Logic.GameState;
+import Communication.Messages.Move;
+import Communication.Messages.Position;
 import Logic.MoveResult;
 
 import java.io.*;
@@ -8,25 +9,48 @@ import java.net.Socket;
 import java.net.SocketException;
 
 public class Client {
+    private static final int PORT = 7777;
 
     private ObjectOutputStream out;
     private ObjectInputStream in;
     private Socket clientSocket;
 
-    private GameState state = new GameState(GameState.StartPosition.VANILLA_ON_BOTTOM);
-
-    public Client() {
-    }
-
-    public void start(String ip, int port) throws IOException {
-        clientSocket = new Socket(ip, port);
+    public Client(String ip) throws IOException {
+        clientSocket = new Socket(ip, PORT);
         out = new ObjectOutputStream(clientSocket.getOutputStream());
         in = new ObjectInputStream(clientSocket.getInputStream());
-        new ServerHandler().start();
     }
 
-    public void sendMessage(Message notif) throws IOException {
-        out.writeObject(notif);
+    public void move(int selectedRow, int selectedCol, int row, int col) {
+        Move move = new Move(new Position(selectedRow, selectedCol), new Position(row, col));
+        sendMessage(move);
+
+        MoveResult res = readMessage(MoveResult.class);
+        if (res == MoveResult.INVALID_MOVE) {
+            throw new IllegalStateException("Unexpected move result: " + res);
+        }
+    }
+
+    private void sendMessage(Object msg) {
+        try {
+            out.writeObject(msg);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private <T> T readMessage(Class<T> clazz) {
+        try {
+            Object message = in.readObject();
+            if (!clazz.isInstance(message)) {
+                throw new RuntimeException(clazz.getSimpleName() + " is not a " + message.getClass().getSimpleName());
+            }
+            return clazz.cast(message);
+        } catch (SocketException e) {
+            throw new RuntimeException("Server disconnected", e);
+        } catch (IOException | ClassNotFoundException e) {
+            throw new RuntimeException("Exception reading from the server: " + e.getMessage(), e);
+        }
     }
 
     public void close() throws IOException {
@@ -34,39 +58,4 @@ public class Client {
         in.close();
         clientSocket.close();
     }
-
-    public void moveCheckerOnce(int selectedRow, int selectedCol, int row, int col) {
-        MoveResult res = state.moveCheckerOnce(selectedRow, selectedCol, row, col);
-        if (res == MoveResult.INVALID_MOVE) {
-            throw new IllegalStateException("Unexpected move result: " + res);
-        }
-    }
-
-    private class ServerHandler extends Thread {
-
-        public ServerHandler() {
-            setDaemon(true);
-        }
-
-        @Override
-        public void run() {
-            try {
-                Object message;
-                while ((message = in.readObject()) != null) {
-                    if (message instanceof Message n) {
-                        System.out.println("Received an unrecognized message");
-                    } else {
-                        System.out.println("Received an unrecognized message");
-                    }
-                }
-                in.close();
-            } catch (SocketException e) {
-                System.out.println("Communication.Server disconnected");
-            }
-            catch (IOException | ClassNotFoundException e) {
-                System.out.println("Exception reading from the server: " + e.getMessage());
-            }
-        }
-    }
-
 }

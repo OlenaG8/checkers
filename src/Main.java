@@ -14,13 +14,5 @@ public class Main {
             Menu menu = new Menu();
             menu.setVisible(true);
         });
-
-        Client client = new Client();
-        try {
-            client.start(IP, PORT);
-        } catch (IOException e) {
-            System.out.println("Unable to connect to server: " + e.getMessage());
-            return;
-        }
     }
 }

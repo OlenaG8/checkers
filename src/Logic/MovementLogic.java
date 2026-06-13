@@ -9,7 +9,7 @@ import static Logic.GameState.NUM_OF_TILES;
 
 public class MovementLogic {
 
-    public static int canCheckerMoveOnce(GameState state, int fromRow, int fromCol, int toRow, int toCol) {
+    public static int canMove(GameState state, int fromRow, int fromCol, int toRow, int toCol) {
         if (fromRow < 0 || fromCol < 0 || toRow < 0 || toCol < 0) return 0;
         int maxPossibleIndex = NUM_OF_TILES - 1;
         if (fromRow > maxPossibleIndex || fromCol > maxPossibleIndex || toRow > maxPossibleIndex || toCol > maxPossibleIndex)
@@ -100,7 +100,7 @@ public class MovementLogic {
             }
         } else {
             for (int[] d : directions) {
-                if (canCheckerMoveOnce(state, row, col, row + d[0] * 2, col + d[1] * 2) == 2) {
+                if (canMove(state, row, col, row + d[0] * 2, col + d[1] * 2) == 2) {
                     return true;
                 }
             }
@@ -129,7 +129,7 @@ public class MovementLogic {
                 if (isCurrentPlayer) {
                     for (int tr = 0; tr < NUM_OF_TILES; tr++) {
                         for (int tc = 0; tc < NUM_OF_TILES; tc++) {
-                            if (canCheckerMoveOnce(state, r, c, tr, tc) > 0) {
+                            if (canMove(state, r, c, tr, tc) > 0) {
                                 return true;
                             }
                         }
@@ -144,7 +144,7 @@ public class MovementLogic {
         List<Position> moves = new ArrayList<>();
         for (int r = 0; r < NUM_OF_TILES; r++) {
             for (int c = 0; c < NUM_OF_TILES; c++) {
-                int moveType = canCheckerMoveOnce(state, row, col, r, c);
+                int moveType = canMove(state, row, col, r, c);
                 if (moveType > 0) {
                     if (state.isJumpingSequence && moveType != 2) continue;
                     moves.add(new Position(r, c));

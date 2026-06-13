@@ -27,8 +27,8 @@ public class GameState {
                 board[row][col] = curColor;
     }
 
-    public MoveResult moveCheckerOnce(int fromRow, int fromCol, int toRow, int toCol) {
-        int res = MovementLogic.canCheckerMoveOnce(this, fromRow, fromCol, toRow, toCol);
+    public MoveResult move(int fromRow, int fromCol, int toRow, int toCol) {
+        int res = MovementLogic.canMove(this, fromRow, fromCol, toRow, toCol);
         if (res == 0) return MoveResult.INVALID_MOVE;
 
         PieceType checkerToMove = board[fromRow][fromCol];
