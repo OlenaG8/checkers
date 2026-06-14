@@ -110,6 +110,30 @@ public class Board extends JPanel {
                 repaint();
             }
         });
+
+        client.onMoveResult(res -> {
+            if (res == MoveResult.INVALID_MOVE) {
+                throw new IllegalStateException("Unexpected move result: " + res);
+            }
+        });
+
+        client.onOpponentMove(move -> {
+            MoveResult res = state.move(
+                    move.getFrom().getRow(),
+                    move.getFrom().getCol(),
+                    move.getTo().getRow(),
+                    move.getTo().getCol()
+            );
+            switch (res) {
+                case END_TURN:
+                    endTurnLocal();
+                    break;
+                case ENTER_JUMP_SEQUENCE:
+                    selectPiece(move.getTo().getRow(), move.getTo().getCol());
+                    break;
+            }
+            repaint();
+        });
     }
 
     private void unselectPiece() {

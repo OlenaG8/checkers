@@ -129,10 +129,13 @@ public class Menu extends JFrame {
             return;
         }
 
-        this.dispose();
-        SwingUtilities.invokeLater(() -> {
-            Gui gameWindow = new Gui(client);
-            gameWindow.setVisible(true);
+        System.out.println("Waiting for server to start the game...");
+        client.onGameStarted(started -> {
+            this.dispose();
+            SwingUtilities.invokeLater(() -> {
+                Gui gameWindow = new Gui(client);
+                gameWindow.setVisible(true);
+            });
         });
     }
 
