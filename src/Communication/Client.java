@@ -26,7 +26,9 @@ public class Client {
         clientSocket = new Socket(ip, PORT);
         out = new ObjectOutputStream(clientSocket.getOutputStream());
         in = new ObjectInputStream(clientSocket.getInputStream());
+    }
 
+    public void start() {
         new ConnectionHandler().start();
     }
 

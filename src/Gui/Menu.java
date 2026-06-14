@@ -63,7 +63,7 @@ public class Menu extends JFrame {
 
         gbc.gridy++;
         JButton onlinePlayBtn = createMenuButton("Graj w sieci");
-        onlinePlayBtn.addActionListener(e -> showNotImplementedMessage("Gra online"));
+        onlinePlayBtn.addActionListener(e -> startNetworkGame());
         mainPanel.add(onlinePlayBtn, gbc);
 
         gbc.gridy++;
@@ -121,22 +121,54 @@ public class Menu extends JFrame {
     }
 
     private void startLocalGame() {
+//        Client client;
+//        try {
+//            client = new Client("127.0.0.1");
+//        } catch (IOException e) {
+//            System.out.println("Unable to connect to server: " + e.getMessage());
+//            return;
+//        }
+//
+//        System.out.println("Waiting for server to start the game...");
+//        client.onGameStarted(started -> {
+//            this.dispose();
+//            SwingUtilities.invokeLater(() -> {
+//                Gui gameWindow = new Gui(client, started.getYourColor());
+//                gameWindow.setVisible(true);
+//            });
+//        });
+    }
+
+    private void startNetworkGame() {
+        String addr = JOptionPane.showInputDialog(this, "Enter server IP address:", "127.0.0.1");
+
         Client client;
         try {
-            client = new Client("127.0.0.1");
+            client = new Client(addr);
         } catch (IOException e) {
             System.out.println("Unable to connect to server: " + e.getMessage());
             return;
         }
 
+        this.dispose();
+
+        JOptionPane pane = new JOptionPane("Waiting for game to start...", JOptionPane.INFORMATION_MESSAGE,
+                JOptionPane.DEFAULT_OPTION, null,
+                new Object[]{}, "127.0.0.1");
+        JDialog dialog = pane.createDialog(null, "Waiting...");
+        dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+
         System.out.println("Waiting for server to start the game...");
         client.onGameStarted(started -> {
-            this.dispose();
+            dialog.dispose();
             SwingUtilities.invokeLater(() -> {
                 Gui gameWindow = new Gui(client, started.getYourColor());
                 gameWindow.setVisible(true);
             });
         });
+
+        client.start();
+        dialog.show();
     }
 
     private void showNotImplementedMessage(String featureName) {
