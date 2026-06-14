@@ -4,6 +4,7 @@ import Communication.Messages.GameStarted;
 import Communication.Messages.Move;
 import Logic.GameState;
 import Logic.MoveResult;
+import Logic.PlayerColor;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -26,10 +27,10 @@ public class Server {
             try {
                 GameState state = new GameState(GameState.StartPosition.VANILLA_ON_BOTTOM);
 
-                ConnectionHandler conn1 = new ConnectionHandler(serverSocket.accept(), state);
+                ConnectionHandler conn1 = new ConnectionHandler(serverSocket.accept(), state, PlayerColor.VANILLA);
                 System.out.println("Client connected (player 1)");
 
-                ConnectionHandler conn2 = new ConnectionHandler(serverSocket.accept(), state);
+                ConnectionHandler conn2 = new ConnectionHandler(serverSocket.accept(), state, PlayerColor.CHOCOLATE);
                 System.out.println("Client connected (player 2), starting game");
 
                 conn1.opponent = conn2;
@@ -50,13 +51,16 @@ public class Server {
     private static class ConnectionHandler extends Thread {
         private final Socket clientSocket;
         private final GameState state;
+        private final PlayerColor color;
+
         private final ObjectOutputStream out;
         private final ObjectInputStream in;
         private ConnectionHandler opponent;
 
-        public ConnectionHandler(Socket socket, GameState state) throws IOException {
+        public ConnectionHandler(Socket socket, GameState state, PlayerColor color) throws IOException {
             this.clientSocket = socket;
             this.state = state;
+            this.color = color;
             this.out = new ObjectOutputStream(clientSocket.getOutputStream());
             this.in = new ObjectInputStream(clientSocket.getInputStream());
         }
@@ -64,7 +68,7 @@ public class Server {
         @Override
         public void run() {
             try {
-                out.writeObject(new GameStarted());
+                out.writeObject(new GameStarted(color));
 
                 Object message;
                 while ((message = in.readObject()) != null) {

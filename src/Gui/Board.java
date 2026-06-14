@@ -30,13 +30,15 @@ public class Board extends JPanel {
     private final Gui parentGUI;
     private final Client client;
     private final GameState state;
+    private final PlayerColor myColor;
 
     private List<Position> allowedMoves = Collections.emptyList();
 
-    public Board(Gui parentGUI, Client client, GameState state) {
+    public Board(Gui parentGUI, Client client, GameState state, PlayerColor myColor) {
         this.parentGUI = parentGUI;
         this.client = client;
         this.state = state;
+        this.myColor = myColor;
 
         setBackground(new Color(51, 49, 43));
         setPreferredSize(new Dimension(850, 850));
@@ -54,6 +56,10 @@ public class Board extends JPanel {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
+                if (state.currentPlayer != myColor) {
+                    return;
+                }
+
                 int tileWidth = getWidth() / NUM_OF_TILES;
                 int tileHeight = getHeight() / NUM_OF_TILES;
 

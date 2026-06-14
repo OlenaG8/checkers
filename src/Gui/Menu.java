@@ -133,7 +133,7 @@ public class Menu extends JFrame {
         client.onGameStarted(started -> {
             this.dispose();
             SwingUtilities.invokeLater(() -> {
-                Gui gameWindow = new Gui(client);
+                Gui gameWindow = new Gui(client, started.getYourColor());
                 gameWindow.setVisible(true);
             });
         });

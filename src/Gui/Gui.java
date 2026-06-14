@@ -19,7 +19,7 @@ public class Gui extends JFrame {
 
     private GameState state = new GameState(GameState.StartPosition.VANILLA_ON_BOTTOM);
 
-    public Gui(Client client) {
+    public Gui(Client client, PlayerColor myColor) {
         setTitle("Warcaby");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -59,7 +59,7 @@ public class Gui extends JFrame {
                 }
             }
         };
-        boardWrapper.add(new Board(this, client, state));
+        boardWrapper.add(new Board(this, client, state, myColor));
         boardWrapper.setBackground(new Color(51, 49, 43));
         add(boardWrapper, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
