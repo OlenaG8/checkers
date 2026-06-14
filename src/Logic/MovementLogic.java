@@ -118,14 +118,13 @@ public class MovementLogic {
         return myPieceValue.isVanilla() != targetValue.isVanilla();
     }
 
-    public static boolean hasAnyValidMoves(GameState state, int player) {
+    public static boolean hasAnyValidMoves(GameState state, PlayerColor player) {
         for (int r = 0; r < NUM_OF_TILES; r++) {
             for (int c = 0; c < NUM_OF_TILES; c++) {
                 PieceType piece = state.board[r][c];
                 if (piece == null) continue;
 
-                boolean isCurrentPlayer = (player == 1) == piece.isVanilla();
-
+                boolean isCurrentPlayer = piece.matches(player);
                 if (isCurrentPlayer) {
                     for (int tr = 0; tr < NUM_OF_TILES; tr++) {
                         for (int tc = 0; tc < NUM_OF_TILES; tc++) {

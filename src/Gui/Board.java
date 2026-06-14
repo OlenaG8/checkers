@@ -2,10 +2,7 @@ package Gui;
 
 import Communication.Client;
 import Communication.Messages.Position;
-import Logic.GameState;
-import Logic.MoveResult;
-import Logic.MovementLogic;
-import Logic.PieceType;
+import Logic.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -138,10 +135,7 @@ public class Board extends JPanel {
 
     private boolean isCurrentPlayerPiece(PieceType pieceType) {
         if (pieceType == null) return false;
-        int currentPlayer = parentGUI.getCurrentPlayer();
-        if (currentPlayer == 1) return pieceType.isVanilla();
-        if (currentPlayer == 2) return !pieceType.isVanilla();
-        return false;
+        return pieceType.matches(parentGUI.getCurrentPlayer());
     }
 
     @Override

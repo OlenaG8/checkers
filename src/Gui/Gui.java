@@ -1,13 +1,13 @@
 package Gui;
 
 import Communication.Client;
-import Logic.MovementLogic;
+import Logic.PlayerColor;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class Gui extends JFrame {
-    private int currentPlayer = 1;
+    private PlayerColor currentPlayer = PlayerColor.VANILLA;
 
     private final JLabel whiteTurnLabel;
     private final JLabel blackTurnLabel;
@@ -86,7 +86,7 @@ public class Gui extends JFrame {
 
     private void startTimer() {
         timer = new Timer(1000, _ -> {
-            if (currentPlayer == 1) {
+            if (currentPlayer == PlayerColor.VANILLA) {
                 whiteSeconds++;
                 whiteTimeLabel.setText(String.format("%02d:%02d", whiteSeconds / 60, whiteSeconds % 60));
             } else {
@@ -98,8 +98,8 @@ public class Gui extends JFrame {
     }
 
     public void switchPlayer() {
-        currentPlayer = (currentPlayer == 1) ? 2 : 1;
-        if (currentPlayer == 1) {
+        currentPlayer = currentPlayer == PlayerColor.VANILLA ? PlayerColor.CHOCOLATE : PlayerColor.VANILLA;
+        if (currentPlayer == PlayerColor.VANILLA) {
             whiteTurnLabel.setText("Waniliowe (Twój ruch)");
             blackTurnLabel.setText("Czekoladowe");
         } else {
@@ -108,7 +108,7 @@ public class Gui extends JFrame {
         }
     }
 
-    public int getCurrentPlayer() {
+    public PlayerColor getCurrentPlayer() {
         return currentPlayer;
     }
 
@@ -116,8 +116,8 @@ public class Gui extends JFrame {
         if (timer != null) timer.stop();
 
         Timer delayTimer = new Timer(300, _ -> {
-            int winner = (currentPlayer == 1) ? 2 : 1;
-            String winnerName = (winner == 1) ? "Waniliowe" : "Czekoladowe";
+            PlayerColor winner = currentPlayer == PlayerColor.VANILLA ? PlayerColor.CHOCOLATE : PlayerColor.VANILLA;
+            String winnerName = winner == PlayerColor.VANILLA ? "Waniliowe" : "Czekoladowe";
 
             Object[] options = {"Powrót do Menu", "Opuść grę"};
             int choice = JOptionPane.showOptionDialog(this,
