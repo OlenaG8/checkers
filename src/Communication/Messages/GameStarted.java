@@ -21,6 +21,6 @@ public class GameStarted implements Serializable {
 
     @Override
     public String toString() {
-        return "yourColor=" + yourColor;
+        return "you're " + yourColor;
     }
 }

@@ -31,6 +31,7 @@ public class Board extends JPanel {
     private final Client client;
     private final GameState state;
     private final PlayerColor myColor;
+    private final boolean boardFlipped;
 
     private List<Position> allowedMoves = Collections.emptyList();
 
@@ -39,6 +40,7 @@ public class Board extends JPanel {
         this.client = client;
         this.state = state;
         this.myColor = myColor;
+        this.boardFlipped = myColor == PlayerColor.CHOCOLATE;
 
         setBackground(new Color(51, 49, 43));
         setPreferredSize(new Dimension(850, 850));
@@ -65,6 +67,11 @@ public class Board extends JPanel {
 
                 int col = e.getX() / tileWidth;
                 int row = e.getY() / tileHeight;
+
+                if (boardFlipped) {
+                    col = NUM_OF_TILES - 1 - col;
+                    row = NUM_OF_TILES - 1 - row;
+                }
 
                 if (col < 0 || col > NUM_OF_TILES - 1 || row < 0 || row > NUM_OF_TILES - 1) return;
 
@@ -191,8 +198,16 @@ public class Board extends JPanel {
         double pieceHeight = tileHeight * pieceToTileRatio;
 
         if (selectedRow != -1 && selectedCol != -1) {
-            double tileCenterX = (selectedCol * tileWidth) + (tileWidth / 2.0);
-            double tileCenterY = (selectedRow * tileHeight) + (tileHeight / 2.0);
+            int col = selectedCol;
+            int row = selectedRow;
+
+            if (boardFlipped) {
+                col = NUM_OF_TILES - col - 1;
+                row = NUM_OF_TILES - row - 1;
+            }
+
+            double tileCenterX = (col * tileWidth) + (tileWidth / 2.0);
+            double tileCenterY = (row * tileHeight) + (tileHeight / 2.0);
 
             double highlightToTileRatio = 0.95;
             double highlightWidth = tileWidth * highlightToTileRatio;
@@ -214,8 +229,16 @@ public class Board extends JPanel {
             double moveHighlightHeight = tileHeight * moveHighlightRatio;
 
             for (Position move : allowedMoves) {
-                double targetCenterX = (move.getCol() * tileWidth) + (tileWidth / 2.0);
-                double targetCenterY = (move.getRow() * tileHeight) + (tileHeight / 2.0);
+                col = move.getCol();
+                row = move.getRow();
+
+                if (boardFlipped) {
+                    col = NUM_OF_TILES - col - 1;
+                    row = NUM_OF_TILES - row - 1;
+                }
+
+                double targetCenterX = (col * tileWidth) + (tileWidth / 2.0);
+                double targetCenterY = (row * tileHeight) + (tileHeight / 2.0);
 
                 int thX = (int) Math.round(targetCenterX - (moveHighlightWidth / 2.0));
                 int thY = (int) Math.round(targetCenterY - (moveHighlightHeight / 2.0));
@@ -224,11 +247,19 @@ public class Board extends JPanel {
             }
         }
 
-        for (int row = 0; row < NUM_OF_TILES; row++) {
-            for (int col = 0; col < NUM_OF_TILES; col++) {
-                PieceType pieceType = state.board[row][col];
+        for (int r = 0; r < NUM_OF_TILES; r++) {
+            for (int c = 0; c < NUM_OF_TILES; c++) {
+                PieceType pieceType = state.board[r][c];
 
                 if (pieceType != null) {
+                    int col = c;
+                    int row = r;
+
+                    if (boardFlipped) {
+                        col = NUM_OF_TILES - col - 1;
+                        row = NUM_OF_TILES - row - 1;
+                    }
+
                     double tileCenterX = (col * tileWidth) + (tileWidth / 2.0);
                     double tileCenterY = (row * tileHeight) + (tileHeight / 2.0);
 
