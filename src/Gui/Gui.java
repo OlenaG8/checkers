@@ -20,7 +20,7 @@ public class Gui extends JFrame {
     private GameState state = new GameState();
     private final PlayerColor myColor;
 
-    public Gui(Client client, PlayerColor myColor) {
+    public Gui(Client client, PlayerColor myColor, boolean useAI) {
         this.myColor = myColor;
 
         setTitle("Warcaby");
@@ -70,7 +70,7 @@ public class Gui extends JFrame {
                 }
             }
         };
-        boardWrapper.add(new Board(this, client, state, myColor));
+        boardWrapper.add(new Board(this, client, state, myColor, useAI));
         boardWrapper.setBackground(new Color(51, 49, 43));
         add(boardWrapper, BorderLayout.CENTER);
 

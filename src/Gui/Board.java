@@ -6,13 +6,14 @@ import Logic.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 public class Board extends JPanel {
@@ -28,19 +29,17 @@ public class Board extends JPanel {
     private int selectedCol = -1;
 
     private final Gui parentGUI;
-    private final Client client;
     private final GameState state;
-    private final PlayerColor myColor;
+    private final boolean useAI;
     private final boolean boardFlipped;
 
     private List<Position> allowedMoves = Collections.emptyList();
 
-    public Board(Gui parentGUI, Client client, GameState state, PlayerColor myColor) {
+    public Board(Gui parentGUI, Client client, GameState state, PlayerColor myColor, boolean useAI) {
         this.parentGUI = parentGUI;
-        this.client = client;
         this.state = state;
-        this.myColor = myColor;
         this.boardFlipped = myColor == PlayerColor.CHOCOLATE;
+        this.useAI = useAI;
 
         setBackground(new Color(51, 49, 43));
         setPreferredSize(new Dimension(850, 850));
@@ -175,6 +174,51 @@ public class Board extends JPanel {
         if (!MovementLogic.hasAnyValidMoves(state, state.currentPlayer)) {
             parentGUI.handleWinCondition();
         }
+
+        // AI for investors!
+        if (useAI && state.currentPlayer == PlayerColor.CHOCOLATE) {
+            List<Position> movable = new ArrayList<>();
+
+            for (int r = 0; r < NUM_OF_TILES; r++) {
+                for (int c = 0; c < NUM_OF_TILES; c++) {
+                    PieceType pieceType = state.board[r][c];
+
+                    if (isCurrentPlayerPiece(pieceType) && !MovementLogic.getAllowedMoves(state, r, c).isEmpty()) {
+                        movable.add(new Position(r, c));
+                    }
+                }
+            }
+
+            if (movable.isEmpty()) {
+                return;
+            }
+
+            Position from = movable.get((int) (Math.random() * movable.size()));
+            moveAI(from);
+        }
+    }
+
+    private void moveAI(final Position from) {
+        selectPiece(from.getRow(), from.getCol());
+        repaint();
+
+        Timer delayTimer = new Timer(500, _ -> {
+            List<Position> moves = MovementLogic.getAllowedMoves(state, from.getRow(), from.getCol());
+            Position to = moves.get((int) (Math.random() * moves.size()));
+
+            MoveResult res = state.move(from.getRow(), from.getCol(), to.getRow(), to.getCol());
+            switch (res) {
+                case END_TURN:
+                    endTurnLocal();
+                    repaint();
+                    break;
+                case ENTER_JUMP_SEQUENCE:
+                    moveAI(to);
+                    break;
+            }
+        });
+        delayTimer.setRepeats(false);
+        delayTimer.start();
     }
 
     private boolean isCurrentPlayerPiece(PieceType pieceType) {

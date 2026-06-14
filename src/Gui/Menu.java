@@ -1,6 +1,7 @@
 package Gui;
 
 import Communication.Client;
+import Logic.PlayerColor;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -58,7 +59,7 @@ public class Menu extends JFrame {
 
         gbc.gridy++;
         JButton aiPlayBtn = createMenuButton("Graj z komputerem");
-        aiPlayBtn.addActionListener(e -> showNotImplementedMessage("Gra z komputerem"));
+        aiPlayBtn.addActionListener(e -> startAIGame());
         mainPanel.add(aiPlayBtn, gbc);
 
         gbc.gridy++;
@@ -123,7 +124,15 @@ public class Menu extends JFrame {
     private void startLocalGame() {
         this.dispose();
         SwingUtilities.invokeLater(() -> {
-            Gui gameWindow = new Gui(null, null);
+            Gui gameWindow = new Gui(null, null, false);
+            gameWindow.setVisible(true);
+        });
+    }
+
+    private void startAIGame() {
+        this.dispose();
+        SwingUtilities.invokeLater(() -> {
+            Gui gameWindow = new Gui(null, PlayerColor.VANILLA, true);
             gameWindow.setVisible(true);
         });
     }
@@ -151,19 +160,12 @@ public class Menu extends JFrame {
         client.onGameStarted(started -> {
             dialog.dispose();
             SwingUtilities.invokeLater(() -> {
-                Gui gameWindow = new Gui(client, started.getYourColor());
+                Gui gameWindow = new Gui(client, started.getYourColor(), false);
                 gameWindow.setVisible(true);
             });
         });
 
         client.start();
         dialog.show();
-    }
-
-    private void showNotImplementedMessage(String featureName) {
-        JOptionPane.showMessageDialog(this,
-                featureName + " nie jest jeszcze zaimplementowana.\nBędzie dostępna wkrótce!",
-                "W budowie",
-                JOptionPane.INFORMATION_MESSAGE);
     }
 }
