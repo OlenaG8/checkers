@@ -1,8 +1,10 @@
 package Communication;
 
+import Communication.Messages.GameStarted;
 import Communication.Messages.Move;
 import Logic.GameState;
 import Logic.MoveResult;
+import Logic.PlayerColor;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -12,9 +14,7 @@ public class Server {
     private ServerSocket serverSocket;
     private static final int PORT = 7777;
 
-    private final GameState state = new GameState(GameState.StartPosition.VANILLA_ON_BOTTOM);
-
-    static void main() throws IOException {
+    public static void main(String[] args) throws IOException {
         Server server = new Server();
         server.start(PORT);
     }
@@ -22,8 +22,25 @@ public class Server {
     public void start(int port) throws IOException {
         serverSocket = new ServerSocket(port);
         System.out.println("Server started");
+
         while (true) {
-            new ConnectionHandler(serverSocket.accept(), state).start();
+            try {
+                GameState state = new GameState();
+
+                ConnectionHandler conn1 = new ConnectionHandler(serverSocket.accept(), state, PlayerColor.VANILLA);
+                System.out.println("Client connected (player 1)");
+
+                ConnectionHandler conn2 = new ConnectionHandler(serverSocket.accept(), state, PlayerColor.CHOCOLATE);
+                System.out.println("Client connected (player 2), starting game");
+
+                conn1.opponent = conn2;
+                conn2.opponent = conn1;
+
+                conn1.start();
+                conn2.start();
+            } catch (IOException e) {
+                System.out.println("Failed to start game");
+            }
         }
     }
 
@@ -34,18 +51,24 @@ public class Server {
     private static class ConnectionHandler extends Thread {
         private final Socket clientSocket;
         private final GameState state;
+        private final PlayerColor color;
 
-        public ConnectionHandler(Socket socket, GameState state) {
+        private final ObjectOutputStream out;
+        private final ObjectInputStream in;
+        private ConnectionHandler opponent;
+
+        public ConnectionHandler(Socket socket, GameState state, PlayerColor color) throws IOException {
             this.clientSocket = socket;
             this.state = state;
+            this.color = color;
+            this.out = new ObjectOutputStream(clientSocket.getOutputStream());
+            this.in = new ObjectInputStream(clientSocket.getInputStream());
         }
 
         @Override
         public void run() {
-            System.out.println("Client connected");
             try {
-                ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
-                ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream());
+                out.writeObject(new GameStarted(color));
 
                 Object message;
                 while ((message = in.readObject()) != null) {
@@ -57,7 +80,10 @@ public class Server {
                                 move.getTo().getRow(),
                                 move.getTo().getCol()
                         );
-                        sendMessage(out, res);
+                        out.writeObject(res);
+                        if (res != MoveResult.INVALID_MOVE) {
+                            opponent.out.writeObject(move); // notify opponent of the move
+                        }
                     } else {
                         System.out.println("Server received an unrecognized message");
                     }
@@ -68,17 +94,8 @@ public class Server {
                 clientSocket.close();
             } catch (IOException e) {
                 System.out.println("Client disconnected");
-            }
-            catch (ClassNotFoundException e) {
+            } catch (ClassNotFoundException e) {
                 System.out.println("Exception reading from the client: " + e.getMessage());
-            }
-        }
-
-        private void sendMessage(ObjectOutputStream out, Object msg) {
-            try {
-                out.writeObject(msg);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
             }
         }
     }

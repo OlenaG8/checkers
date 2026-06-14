@@ -1,14 +1,13 @@
 package Gui;
 
 import Communication.Client;
-import Logic.MovementLogic;
+import Logic.GameState;
+import Logic.PlayerColor;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class Gui extends JFrame {
-    private int currentPlayer = 1;
-
     private final JLabel whiteTurnLabel;
     private final JLabel blackTurnLabel;
     private final JLabel whiteTimeLabel;
@@ -18,7 +17,12 @@ public class Gui extends JFrame {
     private int whiteSeconds = 0;
     private int blackSeconds = 0;
 
-    public Gui(Client client) {
+    private GameState state = new GameState();
+    private final PlayerColor myColor;
+
+    public Gui(Client client, PlayerColor myColor, boolean useAI) {
+        this.myColor = myColor;
+
         setTitle("Warcaby");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -34,15 +38,23 @@ public class Gui extends JFrame {
         menuBar.add(gameMenu);
         setJMenuBar(menuBar);
 
-        JPanel topPanel = createPlayerPanel("Czekoladowe");
+        JPanel topPanel = createPlayerPanel("");
         blackTurnLabel = (JLabel) topPanel.getComponent(0);
         blackTimeLabel = (JLabel) topPanel.getComponent(1);
 
-        JPanel bottomPanel = createPlayerPanel("Waniliowe (Twój ruch)");
+        JPanel bottomPanel = createPlayerPanel("");
         whiteTurnLabel = (JLabel) bottomPanel.getComponent(0);
         whiteTimeLabel = (JLabel) bottomPanel.getComponent(1);
 
-        add(topPanel, BorderLayout.NORTH);
+        updateTurnLabels();
+
+        if (myColor == PlayerColor.CHOCOLATE) {
+            add(bottomPanel, BorderLayout.NORTH);
+            add(topPanel, BorderLayout.SOUTH);
+        } else {
+            add(topPanel, BorderLayout.NORTH);
+            add(bottomPanel, BorderLayout.SOUTH);
+        }
 
         JPanel boardWrapper = new JPanel() {
             @Override
@@ -58,10 +70,9 @@ public class Gui extends JFrame {
                 }
             }
         };
-        boardWrapper.add(new Board(this, client));
+        boardWrapper.add(new Board(this, client, state, myColor, useAI));
         boardWrapper.setBackground(new Color(51, 49, 43));
         add(boardWrapper, BorderLayout.CENTER);
-        add(bottomPanel, BorderLayout.SOUTH);
 
         startTimer();
     }
@@ -86,7 +97,7 @@ public class Gui extends JFrame {
 
     private void startTimer() {
         timer = new Timer(1000, _ -> {
-            if (currentPlayer == 1) {
+            if (state.currentPlayer == PlayerColor.VANILLA) {
                 whiteSeconds++;
                 whiteTimeLabel.setText(String.format("%02d:%02d", whiteSeconds / 60, whiteSeconds % 60));
             } else {
@@ -98,26 +109,36 @@ public class Gui extends JFrame {
     }
 
     public void switchPlayer() {
-        currentPlayer = (currentPlayer == 1) ? 2 : 1;
-        if (currentPlayer == 1) {
-            whiteTurnLabel.setText("Waniliowe (Twój ruch)");
-            blackTurnLabel.setText("Czekoladowe");
-        } else {
-            whiteTurnLabel.setText("Waniliowe");
-            blackTurnLabel.setText("Czekoladowe (Twój ruch)");
-        }
+        state.switchPlayer();
+        updateTurnLabels();
     }
 
-    public int getCurrentPlayer() {
-        return currentPlayer;
+    private void updateTurnLabels() {
+        if (state.currentPlayer == PlayerColor.VANILLA) {
+            if (myColor == null || myColor == state.currentPlayer) {
+                whiteTurnLabel.setText("Waniliowe (Twój ruch)");
+                blackTurnLabel.setText("Czekoladowe");
+            } else {
+                whiteTurnLabel.setText("Waniliowe (Ruch przeciwnika)");
+                blackTurnLabel.setText("Czekoladowe");
+            }
+        } else {
+            if (myColor == null || myColor == state.currentPlayer) {
+                whiteTurnLabel.setText("Waniliowe");
+                blackTurnLabel.setText("Czekoladowe (Twój ruch)");
+            } else {
+                whiteTurnLabel.setText("Waniliowe");
+                blackTurnLabel.setText("Czekoladowe (Ruch przeciwnika)");
+            }
+        }
     }
 
     public void handleWinCondition() {
         if (timer != null) timer.stop();
 
         Timer delayTimer = new Timer(300, _ -> {
-            int winner = (currentPlayer == 1) ? 2 : 1;
-            String winnerName = (winner == 1) ? "Waniliowe" : "Czekoladowe";
+            PlayerColor winner = state.currentPlayer == PlayerColor.VANILLA ? PlayerColor.CHOCOLATE : PlayerColor.VANILLA;
+            String winnerName = winner == PlayerColor.VANILLA ? "Waniliowe" : "Czekoladowe";
 
             Object[] options = {"Powrót do Menu", "Opuść grę"};
             int choice = JOptionPane.showOptionDialog(this,

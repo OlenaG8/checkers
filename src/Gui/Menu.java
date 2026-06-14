@@ -1,6 +1,7 @@
 package Gui;
 
 import Communication.Client;
+import Logic.PlayerColor;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -46,7 +47,7 @@ public class Menu extends JFrame {
         gbc.gridx = 0;
         gbc.gridy = 0;
 
-        JLabel titleLabel = new JLabel("CHECKERS TACTICS");
+        JLabel titleLabel = new JLabel("Warcaby");
         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 36));
         titleLabel.setForeground(Color.WHITE);
         mainPanel.add(titleLabel, gbc);
@@ -58,12 +59,12 @@ public class Menu extends JFrame {
 
         gbc.gridy++;
         JButton aiPlayBtn = createMenuButton("Graj z komputerem");
-        aiPlayBtn.addActionListener(e -> showNotImplementedMessage("Gra z komputerem"));
+        aiPlayBtn.addActionListener(e -> startAIGame());
         mainPanel.add(aiPlayBtn, gbc);
 
         gbc.gridy++;
         JButton onlinePlayBtn = createMenuButton("Graj w sieci");
-        onlinePlayBtn.addActionListener(e -> showNotImplementedMessage("Gra online"));
+        onlinePlayBtn.addActionListener(e -> startNetworkGame());
         mainPanel.add(onlinePlayBtn, gbc);
 
         gbc.gridy++;
@@ -121,25 +122,50 @@ public class Menu extends JFrame {
     }
 
     private void startLocalGame() {
+        this.dispose();
+        SwingUtilities.invokeLater(() -> {
+            Gui gameWindow = new Gui(null, null, false);
+            gameWindow.setVisible(true);
+        });
+    }
+
+    private void startAIGame() {
+        this.dispose();
+        SwingUtilities.invokeLater(() -> {
+            Gui gameWindow = new Gui(null, PlayerColor.VANILLA, true);
+            gameWindow.setVisible(true);
+        });
+    }
+
+    private void startNetworkGame() {
+        String addr = JOptionPane.showInputDialog(this, "Enter server IP address:", "127.0.0.1");
+
         Client client;
         try {
-            client = new Client("127.0.0.1");
+            client = new Client(addr);
         } catch (IOException e) {
             System.out.println("Unable to connect to server: " + e.getMessage());
             return;
         }
 
         this.dispose();
-        SwingUtilities.invokeLater(() -> {
-            Gui gameWindow = new Gui(client);
-            gameWindow.setVisible(true);
-        });
-    }
 
-    private void showNotImplementedMessage(String featureName) {
-        JOptionPane.showMessageDialog(this,
-                featureName + " nie jest jeszcze zaimplementowana.\nBędzie dostępna wkrótce!",
-                "W budowie",
-                JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane pane = new JOptionPane("Waiting for game to start...", JOptionPane.INFORMATION_MESSAGE,
+                JOptionPane.DEFAULT_OPTION, null,
+                new Object[]{}, "127.0.0.1");
+        JDialog dialog = pane.createDialog(null, "Waiting...");
+        dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+
+        System.out.println("Waiting for server to start the game...");
+        client.onGameStarted(started -> {
+            dialog.dispose();
+            SwingUtilities.invokeLater(() -> {
+                Gui gameWindow = new Gui(client, started.getYourColor(), false);
+                gameWindow.setVisible(true);
+            });
+        });
+
+        client.start();
+        dialog.show();
     }
 }

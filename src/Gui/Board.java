@@ -2,20 +2,18 @@ package Gui;
 
 import Communication.Client;
 import Communication.Messages.Position;
-import Logic.GameState;
-import Logic.MoveResult;
-import Logic.MovementLogic;
-import Logic.PieceType;
+import Logic.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.Timer;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 public class Board extends JPanel {
@@ -31,14 +29,17 @@ public class Board extends JPanel {
     private int selectedCol = -1;
 
     private final Gui parentGUI;
-    private final Client client;
-    private final GameState state = new GameState(GameState.StartPosition.VANILLA_ON_BOTTOM);
+    private final GameState state;
+    private final boolean useAI;
+    private final boolean boardFlipped;
 
     private List<Position> allowedMoves = Collections.emptyList();
 
-    public Board(Gui parentGUI, Client client) {
+    public Board(Gui parentGUI, Client client, GameState state, PlayerColor myColor, boolean useAI) {
         this.parentGUI = parentGUI;
-        this.client = client;
+        this.state = state;
+        this.boardFlipped = myColor == PlayerColor.CHOCOLATE;
+        this.useAI = useAI;
 
         setBackground(new Color(51, 49, 43));
         setPreferredSize(new Dimension(850, 850));
@@ -56,18 +57,29 @@ public class Board extends JPanel {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
+                if (myColor != null && state.currentPlayer != myColor) {
+                    return;
+                }
+
                 int tileWidth = getWidth() / NUM_OF_TILES;
                 int tileHeight = getHeight() / NUM_OF_TILES;
 
                 int col = e.getX() / tileWidth;
                 int row = e.getY() / tileHeight;
 
+                if (boardFlipped) {
+                    col = NUM_OF_TILES - 1 - col;
+                    row = NUM_OF_TILES - 1 - row;
+                }
+
                 if (col < 0 || col > NUM_OF_TILES - 1 || row < 0 || row > NUM_OF_TILES - 1) return;
 
                 if (state.isJumpingSequence) {
                     int moveResult = MovementLogic.canMove(state, selectedRow, selectedCol, row, col);
                     if (moveResult > 0) {
-                        client.move(selectedRow, selectedCol, row, col);
+                        if (client != null) {
+                            client.move(selectedRow, selectedCol, row, col);
+                        }
                         MoveResult res = state.move(selectedRow, selectedCol, row, col);
                         switch (res) {
                             case END_TURN:
@@ -95,7 +107,9 @@ public class Board extends JPanel {
                                     unselectPiece();
                                 }
                             } else {
-                                client.move(selectedRow, selectedCol, row, col);
+                                if (client != null) {
+                                    client.move(selectedRow, selectedCol, row, col);
+                                }
                                 MoveResult res = state.move(selectedRow, selectedCol, row, col);
                                 switch (res) {
                                     case END_TURN:
@@ -112,6 +126,32 @@ public class Board extends JPanel {
                 repaint();
             }
         });
+
+        if (client != null) {
+            client.onMoveResult(res -> {
+                if (res == MoveResult.INVALID_MOVE) {
+                    throw new IllegalStateException("Unexpected move result: " + res);
+                }
+            });
+
+            client.onOpponentMove(move -> {
+                MoveResult res = state.move(
+                        move.getFrom().getRow(),
+                        move.getFrom().getCol(),
+                        move.getTo().getRow(),
+                        move.getTo().getCol()
+                );
+                switch (res) {
+                    case END_TURN:
+                        endTurnLocal();
+                        break;
+                    case ENTER_JUMP_SEQUENCE:
+                        selectPiece(move.getTo().getRow(), move.getTo().getCol());
+                        break;
+                }
+                repaint();
+            });
+        }
     }
 
     private void unselectPiece() {
@@ -131,17 +171,59 @@ public class Board extends JPanel {
         state.isJumpingSequence = false;
 
         parentGUI.switchPlayer();
-        if (!MovementLogic.hasAnyValidMoves(state, parentGUI.getCurrentPlayer())) {
+        if (!MovementLogic.hasAnyValidMoves(state, state.currentPlayer)) {
             parentGUI.handleWinCondition();
         }
+
+        // AI for investors!
+        if (useAI && state.currentPlayer == PlayerColor.CHOCOLATE) {
+            List<Position> movable = new ArrayList<>();
+
+            for (int r = 0; r < NUM_OF_TILES; r++) {
+                for (int c = 0; c < NUM_OF_TILES; c++) {
+                    PieceType pieceType = state.board[r][c];
+
+                    if (isCurrentPlayerPiece(pieceType) && !MovementLogic.getAllowedMoves(state, r, c).isEmpty()) {
+                        movable.add(new Position(r, c));
+                    }
+                }
+            }
+
+            if (movable.isEmpty()) {
+                return;
+            }
+
+            Position from = movable.get((int) (Math.random() * movable.size()));
+            moveAI(from);
+        }
+    }
+
+    private void moveAI(final Position from) {
+        selectPiece(from.getRow(), from.getCol());
+        repaint();
+
+        Timer delayTimer = new Timer(500, _ -> {
+            List<Position> moves = MovementLogic.getAllowedMoves(state, from.getRow(), from.getCol());
+            Position to = moves.get((int) (Math.random() * moves.size()));
+
+            MoveResult res = state.move(from.getRow(), from.getCol(), to.getRow(), to.getCol());
+            switch (res) {
+                case END_TURN:
+                    endTurnLocal();
+                    repaint();
+                    break;
+                case ENTER_JUMP_SEQUENCE:
+                    moveAI(to);
+                    break;
+            }
+        });
+        delayTimer.setRepeats(false);
+        delayTimer.start();
     }
 
     private boolean isCurrentPlayerPiece(PieceType pieceType) {
         if (pieceType == null) return false;
-        int currentPlayer = parentGUI.getCurrentPlayer();
-        if (currentPlayer == 1) return pieceType.isVanilla();
-        if (currentPlayer == 2) return !pieceType.isVanilla();
-        return false;
+        return pieceType.matches(state.currentPlayer);
     }
 
     @Override
@@ -166,8 +248,16 @@ public class Board extends JPanel {
         double pieceHeight = tileHeight * pieceToTileRatio;
 
         if (selectedRow != -1 && selectedCol != -1) {
-            double tileCenterX = (selectedCol * tileWidth) + (tileWidth / 2.0);
-            double tileCenterY = (selectedRow * tileHeight) + (tileHeight / 2.0);
+            int col = selectedCol;
+            int row = selectedRow;
+
+            if (boardFlipped) {
+                col = NUM_OF_TILES - col - 1;
+                row = NUM_OF_TILES - row - 1;
+            }
+
+            double tileCenterX = (col * tileWidth) + (tileWidth / 2.0);
+            double tileCenterY = (row * tileHeight) + (tileHeight / 2.0);
 
             double highlightToTileRatio = 0.95;
             double highlightWidth = tileWidth * highlightToTileRatio;
@@ -189,8 +279,16 @@ public class Board extends JPanel {
             double moveHighlightHeight = tileHeight * moveHighlightRatio;
 
             for (Position move : allowedMoves) {
-                double targetCenterX = (move.getCol() * tileWidth) + (tileWidth / 2.0);
-                double targetCenterY = (move.getRow() * tileHeight) + (tileHeight / 2.0);
+                col = move.getCol();
+                row = move.getRow();
+
+                if (boardFlipped) {
+                    col = NUM_OF_TILES - col - 1;
+                    row = NUM_OF_TILES - row - 1;
+                }
+
+                double targetCenterX = (col * tileWidth) + (tileWidth / 2.0);
+                double targetCenterY = (row * tileHeight) + (tileHeight / 2.0);
 
                 int thX = (int) Math.round(targetCenterX - (moveHighlightWidth / 2.0));
                 int thY = (int) Math.round(targetCenterY - (moveHighlightHeight / 2.0));
@@ -199,11 +297,19 @@ public class Board extends JPanel {
             }
         }
 
-        for (int row = 0; row < NUM_OF_TILES; row++) {
-            for (int col = 0; col < NUM_OF_TILES; col++) {
-                PieceType pieceType = state.board[row][col];
+        for (int r = 0; r < NUM_OF_TILES; r++) {
+            for (int c = 0; c < NUM_OF_TILES; c++) {
+                PieceType pieceType = state.board[r][c];
 
                 if (pieceType != null) {
+                    int col = c;
+                    int row = r;
+
+                    if (boardFlipped) {
+                        col = NUM_OF_TILES - col - 1;
+                        row = NUM_OF_TILES - row - 1;
+                    }
+
                     double tileCenterX = (col * tileWidth) + (tileWidth / 2.0);
                     double tileCenterY = (row * tileHeight) + (tileHeight / 2.0);
 

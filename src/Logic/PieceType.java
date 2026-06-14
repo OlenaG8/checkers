@@ -14,6 +14,16 @@ public enum PieceType {
         this.queen = queen;
     }
 
+    public boolean matches(PlayerColor color) {
+        switch (color) {
+            case VANILLA:
+                return vanilla;
+            case CHOCOLATE:
+                return !vanilla;
+        }
+        return false;
+    }
+
     public boolean isVanilla() {
         return vanilla;
     }
