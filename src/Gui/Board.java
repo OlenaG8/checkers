@@ -29,13 +29,14 @@ public class Board extends JPanel {
 
     private final Gui parentGUI;
     private final Client client;
-    private final GameState state = new GameState(GameState.StartPosition.VANILLA_ON_BOTTOM);
+    private final GameState state;
 
     private List<Position> allowedMoves = Collections.emptyList();
 
-    public Board(Gui parentGUI, Client client) {
+    public Board(Gui parentGUI, Client client, GameState state) {
         this.parentGUI = parentGUI;
         this.client = client;
+        this.state = state;
 
         setBackground(new Color(51, 49, 43));
         setPreferredSize(new Dimension(850, 850));
@@ -128,14 +129,14 @@ public class Board extends JPanel {
         state.isJumpingSequence = false;
 
         parentGUI.switchPlayer();
-        if (!MovementLogic.hasAnyValidMoves(state, parentGUI.getCurrentPlayer())) {
+        if (!MovementLogic.hasAnyValidMoves(state, state.currentPlayer)) {
             parentGUI.handleWinCondition();
         }
     }
 
     private boolean isCurrentPlayerPiece(PieceType pieceType) {
         if (pieceType == null) return false;
-        return pieceType.matches(parentGUI.getCurrentPlayer());
+        return pieceType.matches(state.currentPlayer);
     }
 
     @Override

@@ -7,6 +7,7 @@ public class GameState {
     public final PieceType[][] board = new PieceType[NUM_OF_TILES][NUM_OF_TILES];
     public final StartPosition whitePosition;
 
+    public PlayerColor currentPlayer = PlayerColor.VANILLA;
     public boolean isJumpingSequence;
 
     public GameState(StartPosition whitePosition) {
@@ -61,6 +62,14 @@ public class GameState {
             return MoveResult.ENTER_JUMP_SEQUENCE;
         } else {
             return MoveResult.END_TURN;
+        }
+    }
+
+    public void switchPlayer() {
+        if  (currentPlayer == PlayerColor.VANILLA) {
+            currentPlayer = PlayerColor.CHOCOLATE;
+        } else {
+            currentPlayer = PlayerColor.VANILLA;
         }
     }
 

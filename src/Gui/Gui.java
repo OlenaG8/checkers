@@ -1,14 +1,13 @@
 package Gui;
 
 import Communication.Client;
+import Logic.GameState;
 import Logic.PlayerColor;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class Gui extends JFrame {
-    private PlayerColor currentPlayer = PlayerColor.VANILLA;
-
     private final JLabel whiteTurnLabel;
     private final JLabel blackTurnLabel;
     private final JLabel whiteTimeLabel;
@@ -17,6 +16,8 @@ public class Gui extends JFrame {
     private Timer timer;
     private int whiteSeconds = 0;
     private int blackSeconds = 0;
+
+    private GameState state = new GameState(GameState.StartPosition.VANILLA_ON_BOTTOM);
 
     public Gui(Client client) {
         setTitle("Warcaby");
@@ -58,7 +59,7 @@ public class Gui extends JFrame {
                 }
             }
         };
-        boardWrapper.add(new Board(this, client));
+        boardWrapper.add(new Board(this, client, state));
         boardWrapper.setBackground(new Color(51, 49, 43));
         add(boardWrapper, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
@@ -86,7 +87,7 @@ public class Gui extends JFrame {
 
     private void startTimer() {
         timer = new Timer(1000, _ -> {
-            if (currentPlayer == PlayerColor.VANILLA) {
+            if (state.currentPlayer == PlayerColor.VANILLA) {
                 whiteSeconds++;
                 whiteTimeLabel.setText(String.format("%02d:%02d", whiteSeconds / 60, whiteSeconds % 60));
             } else {
@@ -98,8 +99,9 @@ public class Gui extends JFrame {
     }
 
     public void switchPlayer() {
-        currentPlayer = currentPlayer == PlayerColor.VANILLA ? PlayerColor.CHOCOLATE : PlayerColor.VANILLA;
-        if (currentPlayer == PlayerColor.VANILLA) {
+        state.switchPlayer();
+
+        if (state.currentPlayer == PlayerColor.VANILLA) {
             whiteTurnLabel.setText("Waniliowe (Twój ruch)");
             blackTurnLabel.setText("Czekoladowe");
         } else {
@@ -108,15 +110,11 @@ public class Gui extends JFrame {
         }
     }
 
-    public PlayerColor getCurrentPlayer() {
-        return currentPlayer;
-    }
-
     public void handleWinCondition() {
         if (timer != null) timer.stop();
 
         Timer delayTimer = new Timer(300, _ -> {
-            PlayerColor winner = currentPlayer == PlayerColor.VANILLA ? PlayerColor.CHOCOLATE : PlayerColor.VANILLA;
+            PlayerColor winner = state.currentPlayer == PlayerColor.VANILLA ? PlayerColor.CHOCOLATE : PlayerColor.VANILLA;
             String winnerName = winner == PlayerColor.VANILLA ? "Waniliowe" : "Czekoladowe";
 
             Object[] options = {"Powrót do Menu", "Opuść grę"};
