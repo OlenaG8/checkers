@@ -3,12 +3,12 @@ package Communication;
 import Communication.Messages.GameStarted;
 import Communication.Messages.Move;
 import Communication.Messages.Position;
-import Logic.GameState;
 import Logic.MoveResult;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.function.Consumer;
 
 public class Client {

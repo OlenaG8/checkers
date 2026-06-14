@@ -115,20 +115,20 @@ public class Gui extends JFrame {
 
     private void updateTurnLabels() {
         if (state.currentPlayer == PlayerColor.VANILLA) {
-            if (myColor != state.currentPlayer) {
-                whiteTurnLabel.setText("Waniliowe (Ruch przeciwnika)");
+            if (myColor == null || myColor == state.currentPlayer) {
+                whiteTurnLabel.setText("Waniliowe (Twój ruch)");
                 blackTurnLabel.setText("Czekoladowe");
             } else {
-                whiteTurnLabel.setText("Waniliowe (Twój ruch)");
+                whiteTurnLabel.setText("Waniliowe (Ruch przeciwnika)");
                 blackTurnLabel.setText("Czekoladowe");
             }
         } else {
-            if (myColor != state.currentPlayer) {
-                whiteTurnLabel.setText("Waniliowe");
-                blackTurnLabel.setText("Czekoladowe (Ruch przeciwnika)");
-            } else {
+            if (myColor == null || myColor == state.currentPlayer) {
                 whiteTurnLabel.setText("Waniliowe");
                 blackTurnLabel.setText("Czekoladowe (Twój ruch)");
+            } else {
+                whiteTurnLabel.setText("Waniliowe");
+                blackTurnLabel.setText("Czekoladowe (Ruch przeciwnika)");
             }
         }
     }

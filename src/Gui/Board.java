@@ -58,7 +58,7 @@ public class Board extends JPanel {
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                if (state.currentPlayer != myColor) {
+                if (myColor != null && state.currentPlayer != myColor) {
                     return;
                 }
 
@@ -78,7 +78,9 @@ public class Board extends JPanel {
                 if (state.isJumpingSequence) {
                     int moveResult = MovementLogic.canMove(state, selectedRow, selectedCol, row, col);
                     if (moveResult > 0) {
-                        client.move(selectedRow, selectedCol, row, col);
+                        if (client != null) {
+                            client.move(selectedRow, selectedCol, row, col);
+                        }
                         MoveResult res = state.move(selectedRow, selectedCol, row, col);
                         switch (res) {
                             case END_TURN:
@@ -106,7 +108,9 @@ public class Board extends JPanel {
                                     unselectPiece();
                                 }
                             } else {
-                                client.move(selectedRow, selectedCol, row, col);
+                                if (client != null) {
+                                    client.move(selectedRow, selectedCol, row, col);
+                                }
                                 MoveResult res = state.move(selectedRow, selectedCol, row, col);
                                 switch (res) {
                                     case END_TURN:
@@ -124,29 +128,31 @@ public class Board extends JPanel {
             }
         });
 
-        client.onMoveResult(res -> {
-            if (res == MoveResult.INVALID_MOVE) {
-                throw new IllegalStateException("Unexpected move result: " + res);
-            }
-        });
+        if (client != null) {
+            client.onMoveResult(res -> {
+                if (res == MoveResult.INVALID_MOVE) {
+                    throw new IllegalStateException("Unexpected move result: " + res);
+                }
+            });
 
-        client.onOpponentMove(move -> {
-            MoveResult res = state.move(
-                    move.getFrom().getRow(),
-                    move.getFrom().getCol(),
-                    move.getTo().getRow(),
-                    move.getTo().getCol()
-            );
-            switch (res) {
-                case END_TURN:
-                    endTurnLocal();
-                    break;
-                case ENTER_JUMP_SEQUENCE:
-                    selectPiece(move.getTo().getRow(), move.getTo().getCol());
-                    break;
-            }
-            repaint();
-        });
+            client.onOpponentMove(move -> {
+                MoveResult res = state.move(
+                        move.getFrom().getRow(),
+                        move.getFrom().getCol(),
+                        move.getTo().getRow(),
+                        move.getTo().getCol()
+                );
+                switch (res) {
+                    case END_TURN:
+                        endTurnLocal();
+                        break;
+                    case ENTER_JUMP_SEQUENCE:
+                        selectPiece(move.getTo().getRow(), move.getTo().getCol());
+                        break;
+                }
+                repaint();
+            });
+        }
     }
 
     private void unselectPiece() {

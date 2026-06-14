@@ -121,22 +121,11 @@ public class Menu extends JFrame {
     }
 
     private void startLocalGame() {
-//        Client client;
-//        try {
-//            client = new Client("127.0.0.1");
-//        } catch (IOException e) {
-//            System.out.println("Unable to connect to server: " + e.getMessage());
-//            return;
-//        }
-//
-//        System.out.println("Waiting for server to start the game...");
-//        client.onGameStarted(started -> {
-//            this.dispose();
-//            SwingUtilities.invokeLater(() -> {
-//                Gui gameWindow = new Gui(client, started.getYourColor());
-//                gameWindow.setVisible(true);
-//            });
-//        });
+        this.dispose();
+        SwingUtilities.invokeLater(() -> {
+            Gui gameWindow = new Gui(null, null);
+            gameWindow.setVisible(true);
+        });
     }
 
     private void startNetworkGame() {
