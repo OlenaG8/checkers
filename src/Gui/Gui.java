@@ -17,7 +17,7 @@ public class Gui extends JFrame {
     private int whiteSeconds = 0;
     private int blackSeconds = 0;
 
-    private GameState state = new GameState(GameState.StartPosition.VANILLA_ON_BOTTOM);
+    private GameState state = new GameState();
 
     public Gui(Client client, PlayerColor myColor) {
         setTitle("Warcaby");

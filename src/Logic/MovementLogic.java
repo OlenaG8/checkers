@@ -54,8 +54,8 @@ public class MovementLogic {
 
             return 0;
         } else {
-            boolean movesUp = ((state.whitePosition == GameState.StartPosition.VANILLA_ON_BOTTOM) == checkerValue.isVanilla());
-            boolean movesDown = ((state.whitePosition == GameState.StartPosition.VANILLA_ON_BOTTOM) != checkerValue.isVanilla());
+            boolean movesUp = checkerValue.isVanilla();
+            boolean movesDown = !checkerValue.isVanilla();
 
             if (rowDiff == 1) {
                 if (movesUp && rowDir == -1) return 1;

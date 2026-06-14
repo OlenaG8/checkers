@@ -25,7 +25,7 @@ public class Server {
 
         while (true) {
             try {
-                GameState state = new GameState(GameState.StartPosition.VANILLA_ON_BOTTOM);
+                GameState state = new GameState();
 
                 ConnectionHandler conn1 = new ConnectionHandler(serverSocket.accept(), state, PlayerColor.VANILLA);
                 System.out.println("Client connected (player 1)");
