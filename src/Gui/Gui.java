@@ -18,8 +18,11 @@ public class Gui extends JFrame {
     private int blackSeconds = 0;
 
     private GameState state = new GameState();
+    private final PlayerColor myColor;
 
     public Gui(Client client, PlayerColor myColor) {
+        this.myColor = myColor;
+
         setTitle("Warcaby");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -35,15 +38,23 @@ public class Gui extends JFrame {
         menuBar.add(gameMenu);
         setJMenuBar(menuBar);
 
-        JPanel topPanel = createPlayerPanel("Czekoladowe");
+        JPanel topPanel = createPlayerPanel("");
         blackTurnLabel = (JLabel) topPanel.getComponent(0);
         blackTimeLabel = (JLabel) topPanel.getComponent(1);
 
-        JPanel bottomPanel = createPlayerPanel("Waniliowe (Twój ruch)");
+        JPanel bottomPanel = createPlayerPanel("");
         whiteTurnLabel = (JLabel) bottomPanel.getComponent(0);
         whiteTimeLabel = (JLabel) bottomPanel.getComponent(1);
 
-        add(topPanel, BorderLayout.NORTH);
+        updateTurnLabels();
+
+        if (myColor == PlayerColor.CHOCOLATE) {
+            add(bottomPanel, BorderLayout.NORTH);
+            add(topPanel, BorderLayout.SOUTH);
+        } else {
+            add(topPanel, BorderLayout.NORTH);
+            add(bottomPanel, BorderLayout.SOUTH);
+        }
 
         JPanel boardWrapper = new JPanel() {
             @Override
@@ -62,7 +73,6 @@ public class Gui extends JFrame {
         boardWrapper.add(new Board(this, client, state, myColor));
         boardWrapper.setBackground(new Color(51, 49, 43));
         add(boardWrapper, BorderLayout.CENTER);
-        add(bottomPanel, BorderLayout.SOUTH);
 
         startTimer();
     }
@@ -100,13 +110,26 @@ public class Gui extends JFrame {
 
     public void switchPlayer() {
         state.switchPlayer();
+        updateTurnLabels();
+    }
 
+    private void updateTurnLabels() {
         if (state.currentPlayer == PlayerColor.VANILLA) {
-            whiteTurnLabel.setText("Waniliowe (Twój ruch)");
-            blackTurnLabel.setText("Czekoladowe");
+            if (myColor != state.currentPlayer) {
+                whiteTurnLabel.setText("Waniliowe (Ruch przeciwnika)");
+                blackTurnLabel.setText("Czekoladowe");
+            } else {
+                whiteTurnLabel.setText("Waniliowe (Twój ruch)");
+                blackTurnLabel.setText("Czekoladowe");
+            }
         } else {
-            whiteTurnLabel.setText("Waniliowe");
-            blackTurnLabel.setText("Czekoladowe (Twój ruch)");
+            if (myColor != state.currentPlayer) {
+                whiteTurnLabel.setText("Waniliowe");
+                blackTurnLabel.setText("Czekoladowe (Ruch przeciwnika)");
+            } else {
+                whiteTurnLabel.setText("Waniliowe");
+                blackTurnLabel.setText("Czekoladowe (Twój ruch)");
+            }
         }
     }
 
