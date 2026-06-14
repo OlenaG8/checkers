@@ -46,7 +46,7 @@ public class Menu extends JFrame {
         gbc.gridx = 0;
         gbc.gridy = 0;
 
-        JLabel titleLabel = new JLabel("CHECKERS TACTICS");
+        JLabel titleLabel = new JLabel("Warcaby");
         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 36));
         titleLabel.setForeground(Color.WHITE);
         mainPanel.add(titleLabel, gbc);
