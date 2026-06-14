@@ -14,7 +14,7 @@ public class Server {
 
     private final GameState state = new GameState(GameState.StartPosition.VANILLA_ON_BOTTOM);
 
-    static void main() throws IOException {
+    public static void main(String[] args) throws IOException {
         Server server = new Server();
         server.start(PORT);
     }
